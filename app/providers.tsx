@@ -4,15 +4,16 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrivyProvider, PrivyClientConfig } from "@privy-io/react-auth";
 import { env } from "@/lib/env";
-
+import { NavigationProvider } from "@/components/providers/navigation-provider";
+import { UserProvider } from "@/components/providers/user-provider";
 const queryClient = new QueryClient();
 
 const privyConfig = {
   // Customize Privy's appearance in your app
   appearance: {
-    theme: "light",
-    accentColor: "#676FFF",
-    logo: "https://your-logo-url",
+    theme: "dark",
+    accentColor: "#2596be",
+    logo: "/images/taxmate-logo-no-bg.png",
   },
   // Create embedded wallets for users who don't have a wallet
   embeddedWallets: {
@@ -26,12 +27,12 @@ const privyClientId = env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <PrivyProvider
-        appId={privyAppId}
-        clientId={privyClientId}
-        config={privyConfig}
-      >
-        <NuqsAdapter>{children}</NuqsAdapter>
+      <PrivyProvider appId={privyAppId} clientId={privyClientId} config={privyConfig}>
+        <UserProvider>
+          <NuqsAdapter>
+            <NavigationProvider>{children}</NavigationProvider>
+          </NuqsAdapter>
+        </UserProvider>
       </PrivyProvider>
     </QueryClientProvider>
   );

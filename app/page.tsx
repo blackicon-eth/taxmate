@@ -1,28 +1,39 @@
 "use client";
 
+import { AnimatedButton } from "@/components/custom-ui/animated-button";
+import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 export default function Home() {
-  const { login, logout, ready } = usePrivy();
+  const { login, authenticated } = usePrivy();
+  const router = useRouter();
 
-  if (!ready) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    if (authenticated) {
+      router.push("/simple");
+    }
+  }, [authenticated]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full gap-4">
-      <button
-        onClick={login}
-        className="bg-blue-500 text-black py-2 px-4 rounded-md cursor-pointer"
-      >
-        Login
-      </button>
-      <button
-        onClick={logout}
-        className="bg-red-500 text-white py-2 px-4 rounded-md cursor-pointer"
-      >
-        Logout
-      </button>
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col text-center items-center justify-center size-full gap-[58px] bg-radial from-primary/15 to-background"
+    >
+      <div className="flex flex-col items-center justify-center">
+        <img src="/images/taxmate-logo-no-bg.png" alt="logo" className="w-[500px] h-auto" />
+        <p className="text-6xl text-secondary font-bold leading-14">
+          Don&apos;t Let Cash Sleep
+          <br />
+          Turn Surplus Into Yield
+        </p>
+      </div>
+      <AnimatedButton onClick={login}>
+        {authenticated ? <Check size={24} /> : "Login"}
+      </AnimatedButton>
+    </motion.div>
   );
 }

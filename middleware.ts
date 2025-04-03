@@ -2,37 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken } from "./lib/privy";
 
 export const config = {
-  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|images).*)"],
 };
 
 export default async function middleware(req: NextRequest) {
-  // Skip auth check for free access routes
-  if (req.nextUrl.pathname === "/api/free") {
-    return NextResponse.next();
-  }
+  const isApiRoute = req.nextUrl.pathname.startsWith("/api");
+  const isBaseRoute = req.nextUrl.pathname === "/";
 
   // Get the Privy token from the headers
-  const authToken = req.headers.get("Authorization");
+  const authToken = req.cookies.get("privy-id-token")?.value;
 
   if (!authToken) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Authentication token is required" }, { status: 401 });
+    }
+    return isBaseRoute ? NextResponse.next() : NextResponse.redirect(new URL("/", req.url));
   }
-
-  console.log("authToken", authToken);
 
   // Verify the Privy token
   const { isValid, user } = await verifyAuthToken(authToken);
+
   if (!isValid) {
-    console.error("\nAuthentication failed because jwt is not valid\n");
-    return NextResponse.json(
-      { error: "Authentication failed" },
-      {
-        status: 401,
-      }
-    );
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+    return isBaseRoute ? NextResponse.next() : NextResponse.redirect(new URL("/", req.url));
   }
 
-  // Get the Privy embedded wallet address
-  const address = user?.wallet?.address;
-  return NextResponse.next().headers.set("x-user-address", address!);
+  if (isApiRoute) {
+    // Get the Privy embedded wallet address
+    const address = user?.wallet?.address;
+
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-address", address! as string);
+
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
+
+  return !isBaseRoute ? NextResponse.next() : NextResponse.redirect(new URL("/simple", req.url));
 }

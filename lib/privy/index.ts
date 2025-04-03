@@ -28,7 +28,7 @@ export const verifyAuthToken = async (
         user,
       };
     } catch (error: any) {
-      console.log(`\nError verifying token at try #${retries + 1}: ${error.message}\n`);
+      console.log(`Error verifying token at try #${retries + 1}: ${error.message}`);
       // wait for 1.5 seconds before retrying
       await new Promise((resolve) => setTimeout(resolve, 1500));
       retries++;

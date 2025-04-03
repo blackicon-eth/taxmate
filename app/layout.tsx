@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { Toaster } from "sonner";
-import { Montserrat } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-const montserrat = Montserrat({ subsets: ["latin"] });
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "", // TODO Add title
-  description: "", // TODO Add description
+  title: "TaxMate",
+  description: "TaxMate is a platform for portfolio management and tax reporting",
 };
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${montserrat.className} size-full min-h-screen antialiased`}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className={`${poppins.className} h-full antialiased`}>
         <Providers>
           {children}
           <Suspense>
