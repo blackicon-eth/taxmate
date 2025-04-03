@@ -13,6 +13,9 @@ export const env = createEnv({
 
     // PRIVY
     PRIVY_APP_SECRET: z.string().min(1),
+
+    // TOKEN METRICS
+    TOKEN_METRICS_API_KEY: z.string().min(1),
   },
   client: {
     // PRIVY

@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Header from "../custom-ui/header";
+import { AnimatePresence } from "framer-motion";
 
 const disabledPaths: string[] = ["/"];
 
@@ -13,7 +14,7 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   return (
     <div className="pt-[72px] h-full bg-background text-white transition-all duration-300">
       <Header />
-      <div className="p-5 sm:p-7 lg:p-8 h-full">{children}</div>
+      <div className="p-8 h-full">{children}</div>
     </div>
   );
 };

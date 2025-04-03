@@ -7,60 +7,14 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { LineChart } from "@/components/custom-ui/line-chart";
-
-const chartdata = [
-  {
-    date: "Fed 01",
-    Earned: 0,
-  },
-  {
-    date: "Feb 15",
-    Earned: 5,
-  },
-  {
-    date: "Mar 01",
-    Earned: 9,
-  },
-  {
-    date: "Apr 15",
-    Earned: 13,
-  },
-  {
-    date: "May 01",
-    Earned: 19,
-  },
-  {
-    date: "Jun 15",
-    Earned: 25,
-  },
-  {
-    date: "Jul 01",
-    Earned: 29,
-  },
-  {
-    date: "Aug 15",
-    Earned: 38,
-  },
-  {
-    date: "Sep 01",
-    Earned: 44,
-  },
-  {
-    date: "Oct 01",
-    Earned: 45,
-  },
-  {
-    date: "Nov 01",
-    Earned: 50,
-  },
-  {
-    date: "Dec 01",
-    Earned: 52,
-  },
-];
+import { LineChart } from "@/components/tremor-charts/line-chart";
+import { useCountUp } from "@/hooks/use-count-up";
+import { mockSimpleLineChartData } from "@/lib/constants";
 
 export default function SimplePage() {
+  const totalDeposited = useCountUp(100.98, 1500);
+  const totalEarned = useCountUp(15.56, 1500);
+  const currentAPY = useCountUp(6.5, 1500);
   const { authenticated } = usePrivy();
   const router = useRouter();
 
@@ -72,8 +26,10 @@ export default function SimplePage() {
 
   return (
     <motion.div
+      key="simple"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
       className="flex flex-col gap-3 w-full h-full"
     >
@@ -94,18 +50,18 @@ export default function SimplePage() {
               </h2>
               <p className="text-sm text-secondary">Withdraw whenever you want</p>
             </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center gap-2 px-1">
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center gap-2 px-0.5">
                 <Input placeholder="Amount" />
                 <button className="hover:underline cursor-pointer">Max</button>
               </div>
               <div className="flex gap-2">
-                <AnimatedButton onClick={() => {}} className="w-full h-[35px] text-sm">
+                <AnimatedButton onClick={() => {}} className="w-full h-[38px] text-sm">
                   DEPOSIT
                 </AnimatedButton>
                 <AnimatedButton
                   onClick={() => {}}
-                  className="w-full h-[35px] text-sm bg-secondary text-black"
+                  className="w-full h-[38px] text-sm bg-secondary text-black"
                 >
                   WITHDRAW
                 </AnimatedButton>
@@ -114,29 +70,29 @@ export default function SimplePage() {
           </div>
 
           {/* Data section */}
-          <div className="flex flex-col justify-between items-center w-3/4 px-16 gap-10 h-[70%]">
+          <div className="flex flex-col justify-between items-center w-3/4 px-12 gap-10 h-[70%]">
             {/* Data section */}
             <div className="flex justify-between items-center w-full px-10">
               <div className="flex flex-col justify-center items-center gap-1">
                 <h1 className="text-lg font-bold">TOTAL Deposited</h1>
-                <p className="text-3xl text-primary font-bold">$100.98</p>
+                <p className="text-3xl text-primary font-bold">${totalDeposited}</p>
               </div>
 
               <div className="flex flex-col justify-center items-center gap-1">
                 <h1 className="text-lg font-bold">TOTAL Earned</h1>
-                <p className="text-3xl text-primary font-bold">$15.56</p>
+                <p className="text-3xl text-primary font-bold">${totalEarned}</p>
               </div>
 
               <div className="flex flex-col justify-center items-center gap-1">
                 <h1 className="text-lg font-bold">Current APY %</h1>
-                <p className="text-3xl text-primary font-bold">6.5%</p>
+                <p className="text-3xl text-primary font-bold">{currentAPY}%</p>
               </div>
             </div>
 
             {/* Chart */}
             <LineChart
               className="h-80"
-              data={chartdata}
+              data={mockSimpleLineChartData}
               index="date"
               categories={["Earned"]}
               valueFormatter={(number: number) =>

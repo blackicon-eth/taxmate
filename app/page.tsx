@@ -18,8 +18,10 @@ export default function Home() {
 
   return (
     <motion.div
+      key="home"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
       className="flex flex-col text-center items-center justify-center size-full gap-[58px] bg-radial from-primary/15 to-background"
     >

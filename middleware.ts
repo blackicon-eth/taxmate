@@ -6,6 +6,10 @@ export const config = {
 };
 
 export default async function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith("/api/token-metrics")) {
+    return NextResponse.next();
+  }
+
   const isApiRoute = req.nextUrl.pathname.startsWith("/api");
   const isBaseRoute = req.nextUrl.pathname === "/";
 
