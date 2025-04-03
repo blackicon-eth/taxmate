@@ -23,7 +23,7 @@ export const AnimatedButton = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25, delay: 0.25 * index }}
-      whileHover={{ scale: isLoading ? 1 : 1.03 }}
+      whileHover={{ scale: isLoading ? 1 : 1.03, opacity: isLoading ? 1 : 0.9 }}
       whileTap={{ scale: isLoading ? 1 : 0.97 }}
       className={cn(
         "flex justify-center items-center bg-primary text-secondary h-[64px] w-[166px] text-2xl font-bold cursor-pointer rounded-full",

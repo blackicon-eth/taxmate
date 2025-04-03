@@ -52,7 +52,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   });
 
   // Error state
-  if (userError) return <FullPageError errorMessage={userError.message} />;
+  //if (userError) return <FullPageError errorMessage={userError.message} />;
 
   // Loading state
   if (!isPrivyReady) return <FullPageLoader />;
