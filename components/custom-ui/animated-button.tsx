@@ -5,10 +5,12 @@ import { Loader2 } from "lucide-react";
 
 interface AnimatedButtonProps {
   children: ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
   className?: string;
   index?: number;
   isLoading?: boolean;
+  type?: "button" | "submit";
+  loaderSize?: number;
 }
 
 export const AnimatedButton = ({
@@ -17,9 +19,12 @@ export const AnimatedButton = ({
   className,
   index = 0,
   isLoading = false,
+  type = "button",
+  loaderSize = 28,
 }: AnimatedButtonProps) => {
   return (
     <motion.button
+      type={type}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25, delay: 0.25 * index }}
@@ -30,10 +35,10 @@ export const AnimatedButton = ({
         isLoading && "bg-primary/50",
         className
       )}
-      onClick={() => !isLoading && onClick()}
+      onClick={() => !isLoading && onClick?.()}
     >
       {isLoading ? (
-        <Loader2 className={cn("w-7 h-7 animate-spin", isLoading && "opacity-50")} />
+        <Loader2 className={cn("animate-spin", isLoading && "opacity-50")} size={loaderSize} />
       ) : (
         children
       )}

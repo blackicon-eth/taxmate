@@ -6,6 +6,8 @@ import { PrivyProvider, PrivyClientConfig } from "@privy-io/react-auth";
 import { env } from "@/lib/env";
 import { NavigationProvider } from "@/components/providers/navigation-provider";
 import { UserProvider } from "@/components/providers/user-provider";
+import { BrianButtonProvider } from "@/components/providers/brian-button-provider";
+
 const queryClient = new QueryClient();
 
 const privyConfig = {
@@ -30,7 +32,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       <PrivyProvider appId={privyAppId} clientId={privyClientId} config={privyConfig}>
         <UserProvider>
           <NuqsAdapter>
-            <NavigationProvider>{children}</NavigationProvider>
+            <NavigationProvider>
+              <BrianButtonProvider>{children}</BrianButtonProvider>
+            </NavigationProvider>
           </NuqsAdapter>
         </UserProvider>
       </PrivyProvider>

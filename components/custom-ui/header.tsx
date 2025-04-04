@@ -35,24 +35,30 @@ export const Header = () => {
           </Link>
           <div className="flex items-center gap-5 mt-[5px]">
             <Link href="/simple">
-              <h1
+              <motion.h1
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.3 }}
                 className={cn(
                   "text-xl font-bold text-secondary hover:text-primary",
                   pathname === "/simple" && "text-primary"
                 )}
               >
                 Simple
-              </h1>
+              </motion.h1>
             </Link>
             <Link href="/vault">
-              <h1
+              <motion.h1
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.3 }}
                 className={cn(
                   "text-xl font-bold text-secondary hover:text-primary",
                   pathname === "/vault" && "text-primary"
                 )}
               >
                 Vault
-              </h1>
+              </motion.h1>
             </Link>
           </div>
         </div>

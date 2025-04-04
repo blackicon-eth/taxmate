@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { useCountUp } from "@/hooks/use-count-up";
 import { mockSimpleLineChartData } from "@/lib/constants";
+import { BrianButton, BrianModal } from "@/components/providers/brian-button-provider";
 
 export default function SimplePage() {
   const totalDeposited = useCountUp(100.98, 1500);
@@ -31,7 +32,7 @@ export default function SimplePage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col gap-3 w-full h-full"
+      className="flex relative flex-col gap-3 w-full h-full"
     >
       <div className="flex flex-col gap-7 h-full">
         <h1 className="text-3xl font-bold">Deposit, forget and start earning. Simple as that.</h1>
@@ -103,6 +104,10 @@ export default function SimplePage() {
           </div>
         </div>
       </div>
+
+      <BrianModal>
+        <BrianButton className="absolute bottom-3 right-5" />
+      </BrianModal>
     </motion.div>
   );
 }
