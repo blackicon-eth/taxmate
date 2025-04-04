@@ -36,7 +36,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (ready) {
       setTimeout(() => {
         setIsPrivyReady(true);
-      }, 1500);
+      }, 1000);
     }
   }, [ready]);
 

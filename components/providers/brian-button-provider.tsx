@@ -144,7 +144,7 @@ export const BrianModal = ({ children }: BrianModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex flex-col bg-card w-[860px]">
+      <DialogContent className="flex flex-col bg-card w-[876px]">
         <DialogHeader className="flex flex-col justify-center items-start gap-0.5">
           <DialogTitle className="text-2xl font-bold">Ask Brian</DialogTitle>
           <DialogDescription>Ask Brian about anything web3 related!</DialogDescription>
@@ -155,35 +155,45 @@ export const BrianModal = ({ children }: BrianModalProps) => {
             className="w-full h-[500px] border rounded-md mb-2 p-3"
           >
             <div className="flex flex-col justify-center items-center size-full p-2 gap-2">
-              {chat.map((message, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn(
-                    "flex flex-col items-start max-w-[60%] min-w-[20%] rounded-md py-1.5 px-2",
-                    message.role === "user"
-                      ? "bg-primary self-end"
-                      : "bg-secondary self-start text-black"
-                  )}
-                >
-                  <div className="text-md leading-5 pr-2 pb-1">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
-                  </div>
-                  <div
+              {chat.length === 0 ? (
+                <p className="text-3xl pt-24 text-center">
+                  No messages yet... 🤔
+                  <br />
+                  <span className="text-lg text-foreground/50">
+                    Send a first message to Brian and he will help you out!
+                  </span>
+                </p>
+              ) : (
+                chat.map((message, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
                     className={cn(
-                      "flex w-full justify-end text-[11px]",
-                      message.role === "user" && "text-white"
+                      "flex flex-col items-start max-w-[60%] min-w-[20%] rounded-md py-1.5 px-2",
+                      message.role === "user"
+                        ? "bg-primary self-end"
+                        : "bg-secondary self-start text-black"
                     )}
                   >
-                    {new Date(message.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="text-md leading-5 pr-2 pb-1">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex w-full justify-end text-[11px]",
+                        message.role === "user" && "text-white"
+                      )}
+                    >
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </motion.div>
+                ))
+              )}
               {isLoading && (
                 <AnimatePresence mode="wait">
                   <motion.div

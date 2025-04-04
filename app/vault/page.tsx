@@ -11,7 +11,7 @@ import { useCountUp } from "@/hooks/use-count-up";
 import { mockVaultDonutChartData, mockVaultLineChartData } from "@/lib/constants";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { DonutChart } from "@/components/tremor-charts/donut-chart";
-
+import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
 export default function VaultPage() {
   const totalDeposited = useCountUp(240.01, 1500);
   const totalEarned = useCountUp(56.0, 1500);
@@ -32,7 +32,7 @@ export default function VaultPage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col gap-3 w-full h-full"
+      className="flex flex-col gap-3 w-full h-full relative"
     >
       <div className="flex flex-col gap-7 h-full">
         <h1 className="text-3xl font-bold">Deposit, forget and start earning. Simple as that.</h1>
@@ -120,6 +120,10 @@ export default function VaultPage() {
           </div>
         </div>
       </div>
+
+      <BrianModal>
+        <BrianButton className="absolute bottom-3 right-5" />
+      </BrianModal>
     </motion.div>
   );
 }
