@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { Toaster } from "sonner";
 import { Poppins } from "next/font/google";
-import { AnimatePresence } from "framer-motion";
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {

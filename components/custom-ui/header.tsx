@@ -16,7 +16,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { Copy, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
-import { Skeleton } from "../shadcn-ui/skeleton";
 
 export const Header = () => {
   const { logout } = usePrivy();

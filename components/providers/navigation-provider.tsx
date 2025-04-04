@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Header from "../custom-ui/header";
-import { AnimatePresence } from "framer-motion";
 
 const disabledPaths: string[] = ["/"];
 

@@ -17,7 +17,8 @@ import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
 import { aavePoolAbi } from "@/lib/abi/aave-pool";
 import { env } from "@/lib/env";
 import { erc20Abi } from "@/lib/abi/erc20";
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract} from "wagmi"; 
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { AAVE_POOL_ADDRESS, ATOKEN_ADDRESS, USDC_ADDRESS } from "@/lib/constants";
 
 export default function SimplePage() {
   const { userTransactions } = useRegisteredUser();
@@ -25,25 +26,18 @@ export default function SimplePage() {
   const [minValue, setMinValue] = useState<number>(0);
   const [startingAmount, setStartingAmount] = useState<number>(0);
   const [endingAmount, setEndingAmount] = useState<number>(0);
-
   const totalDeposited = useCountUp(startingAmount, 1500);
   const totalEarned = useCountUp(endingAmount - startingAmount, 1500);
-
-export default function SimplePage() {
   const [amount, setAmount] = useState("");
-  
-
-  const totalDeposited = useCountUp(100.98, 1500);
-  const totalEarned = useCountUp(15.56, 1500);
   const currentAPY = useCountUp(2.44, 1500);
   const { user, authenticated } = usePrivy();
   const router = useRouter();
 
   const { data: userDeposits } = useReadContract({
-    address: env.NEXT_PUBLIC_ATOKEN_ADDRESS as `0x${string}`,
+    address: ATOKEN_ADDRESS as `0x${string}`,
     abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: [user.wallet.address as `0x${string}`],
+    functionName: "balanceOf",
+    args: [user?.wallet?.address as `0x${string}`],
   });
 
   const {
@@ -67,7 +61,8 @@ export default function SimplePage() {
     writeContract: writeWithdrawContract,
   } = useWriteContract();
 
-  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash })
+  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } =
+    useWaitForTransactionReceipt({ hash: approvalTxHash });
 
   useEffect(() => {
     if (!authenticated) {
@@ -89,99 +84,98 @@ export default function SimplePage() {
       setMinValue(Math.min(...userTransactions.aave.map((transaction) => transaction.amountUSD)));
     }
   }, [userTransactions]);
-  useEffect(()=>{
-    if(isApprovalConfirmed){
-      console.log("Depositing...")
-      
+  useEffect(() => {
+    if (isApprovalConfirmed) {
+      console.log("Depositing...");
+
       // Convert amount to USDC base units (6 decimals)
       const amountInUSDC = parseFloat(amount) * 1_000_000;
       const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
 
       writeDepositContract({
-        address: env.NEXT_PUBLIC_AAVE_POOL_ADDRESS as `0x${string}`,
+        address: AAVE_POOL_ADDRESS as `0x${string}`,
         abi: aavePoolAbi,
-        functionName: 'supply',
+        functionName: "supply",
         args: [
-          env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+          USDC_ADDRESS as `0x${string}`,
           amountInUSDCBigInt,
-          user.wallet.address as `0x${string}`,
-          BigInt(1927),
+          user?.wallet?.address as `0x${string}`,
+          1927,
         ],
       });
     }
-  },[isApprovalConfirmed, amount, user?.wallet?.address, writeDepositContract])
-  
+  }, [isApprovalConfirmed, amount, user?.wallet?.address, writeDepositContract]);
+
   // Handle validation and formatting of input
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     // Only allow numbers and at most one decimal point
-    // Regex explanation: 
+    // Regex explanation:
     // ^ - start of string
     // \d* - zero or more digits
     // (\\.\d*)? - optional group of decimal point followed by zero or more digits
     // $ - end of string
-    if (value === '' || /^\d*(\.\d*)?$/.test(value)) {
+    if (value === "" || /^\d*(\.\d*)?$/.test(value)) {
       setAmount(value);
     }
   };
-  
+
   const handleDeposit = async () => {
     try {
       // Convert amount to USDC base units (6 decimals)
       const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
-      
+
       // Check for valid number and handle edge cases
       if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
         console.error("Invalid amount");
         return;
       }
-      
+
       // Round to handle potential floating point issues and convert to BigInt
       const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
-      
+
       console.log("Approving...", amountInUSDCBigInt.toString());
-      
+
       writeApprovalContract({
-        address: env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+        address: USDC_ADDRESS as `0x${string}`,
         abi: erc20Abi,
-        functionName: 'approve',
-        args: [env.NEXT_PUBLIC_AAVE_POOL_ADDRESS as `0x${string}`, amountInUSDCBigInt],
+        functionName: "approve",
+        args: [AAVE_POOL_ADDRESS as `0x${string}`, amountInUSDCBigInt],
       });
     } catch (error) {
       console.error("Error depositing:", error);
     }
-  }
+  };
 
   const handleWithdraw = async () => {
     try {
       // Convert amount to USDC base units (6 decimals)
       const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
-      
+
       // Check for valid number and handle edge cases
       if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
         console.error("Invalid amount");
         return;
       }
-      
+
       // Round to handle potential floating point issues and convert to BigInt
-      const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));    
+      const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
 
       writeWithdrawContract({
-        address: env.NEXT_PUBLIC_AAVE_POOL_ADDRESS as `0x${string}`,
+        address: AAVE_POOL_ADDRESS as `0x${string}`,
         abi: aavePoolAbi,
-        functionName: 'withdraw',
+        functionName: "withdraw",
         args: [
-          env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+          USDC_ADDRESS as `0x${string}`,
           amountInUSDCBigInt,
-          user.wallet.address as `0x${string}`,
+          user?.wallet?.address as `0x${string}`,
         ],
       });
-
     } catch (error) {
       console.error("Error withdrawing:", error);
     }
-  }
+  };
 
   return (
     <motion.div

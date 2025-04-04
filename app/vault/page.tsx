@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
-import { mockVaultDonutChartData } from "@/lib/constants";
+import { mockVaultDonutChartData, USDC_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { DonutChart } from "@/components/tremor-charts/donut-chart";
 import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
@@ -21,7 +21,7 @@ import { CsvDownloadModal } from "@/components/custom-ui/csv-download-modal";
 import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
 import { env } from "@/lib/env";
 import { vaultAbi } from "@/lib/abi/vault";
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { erc20Abi } from "@/lib/abi/erc20";
 
 export default function VaultPage() {
@@ -63,11 +63,6 @@ export default function VaultPage() {
       setROI(((endingAmount - startingAmount) / startingAmount) * 100);
     }
   }, [userTransactions]);
-  const { vault_data } = useReadContract({
-    address: env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`,
-    abi: vaultAbi,
-    functionName: "vaultData",
-  });
 
   const {
     data: depositTxHash,
@@ -83,69 +78,66 @@ export default function VaultPage() {
     writeContract: writeApprovalContract,
   } = useWriteContract();
 
-  
-  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash })
-
+  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } =
+    useWaitForTransactionReceipt({ hash: approvalTxHash });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     // Only allow numbers and at most one decimal point
-    // Regex explanation: 
+    // Regex explanation:
     // ^ - start of string
     // \d* - zero or more digits
     // (\\.\d*)? - optional group of decimal point followed by zero or more digits
     // $ - end of string
-    if (value === '' || /^\d*(\.\d*)?$/.test(value)) {
+    if (value === "" || /^\d*(\.\d*)?$/.test(value)) {
       setAmount(value);
     }
   };
-  
 
   useEffect(() => {
     if (isApprovalConfirmed) {
       // Convert amount to USDC base units (6 decimals)
       const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
-  
+
       // Check for valid number and handle edge cases
       if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
         toast.error("Invalid amount");
         return;
       }
-      
+
       // Round to handle potential floating point issues and convert to BigInt
       const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
-          
+
       writeDepositContract({
-        address: env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`,
+        address: VAULT_ADDRESS as `0x${string}`,
         abi: vaultAbi,
         functionName: "deposit",
         args: [amountInUSDCBigInt],
       });
     }
-  }, [isApprovalConfirmed])
+  }, [isApprovalConfirmed]);
 
   const handleDeposit = async () => {
     try {
       // Convert amount to USDC base units (6 decimals)
       const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
-      
+
       // Check for valid number and handle edge cases
       if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
         toast.error("Invalid amount");
         return;
       }
-      
+
       // Round to handle potential floating point issues and convert to BigInt
       const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
-      
+
       writeApprovalContract({
-        address: env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+        address: USDC_ADDRESS as `0x${string}`,
         abi: erc20Abi,
-        functionName: 'approve',
-        args: [env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`, amountInUSDCBigInt],
+        functionName: "approve",
+        args: [VAULT_ADDRESS as `0x${string}`, amountInUSDCBigInt],
       });
-      
     } catch (error) {
       toast.error("Failed to deposit");
     }
@@ -171,7 +163,7 @@ export default function VaultPage() {
       setIsRebalancing(false);
     }
   };
-  
+
   return (
     <motion.div
       key="vault"

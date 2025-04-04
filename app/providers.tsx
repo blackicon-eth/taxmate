@@ -7,19 +7,17 @@ import { env } from "@/lib/env";
 import { NavigationProvider } from "@/components/providers/navigation-provider";
 import { UserProvider } from "@/components/providers/user-provider";
 import { BrianButtonProvider } from "@/components/providers/brian-button-provider";
-import { ethers } from "ethers";
 import { arbitrumSepolia } from "viem/chains";
 
-import {http} from 'wagmi';
-import {WagmiProvider, createConfig} from '@privy-io/wagmi';
-
+import { http } from "wagmi";
+import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 
 const queryClient = new QueryClient();
 
 export const wagmiConfig = createConfig({
   chains: [arbitrumSepolia],
   transports: {
-    [arbitrumSepolia.id]: http()
+    [arbitrumSepolia.id]: http(),
   },
 });
 
@@ -44,17 +42,15 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <PrivyProvider appId={privyAppId} clientId={privyClientId} config={privyConfig}>
       <QueryClientProvider client={queryClient}>
-      
-          <UserProvider>
-            <NuqsAdapter>
-              <NavigationProvider>
-                <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-                  <BrianButtonProvider>{children}</BrianButtonProvider>
-                </WagmiProvider>
-              </NavigationProvider>
-            </NuqsAdapter>
-          </UserProvider>
-
+        <UserProvider>
+          <NuqsAdapter>
+            <NavigationProvider>
+              <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
+                <BrianButtonProvider>{children}</BrianButtonProvider>
+              </WagmiProvider>
+            </NavigationProvider>
+          </NuqsAdapter>
+        </UserProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );
