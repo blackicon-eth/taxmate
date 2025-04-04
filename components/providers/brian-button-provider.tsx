@@ -84,7 +84,7 @@ interface BrianModalProps {
 
 export const BrianModal = ({ children }: BrianModalProps) => {
   const { chat, setChat } = useBrianChatStore();
-  const [message, setMessage] = useState<string | undefined>(undefined);
+  const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
