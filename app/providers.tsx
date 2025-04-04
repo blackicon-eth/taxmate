@@ -10,11 +10,18 @@ import { BrianButtonProvider } from "@/components/providers/brian-button-provide
 import { ethers } from "ethers";
 import { arbitrumSepolia } from "viem/chains";
 
+import {http} from 'wagmi';
+import {WagmiProvider, createConfig} from '@privy-io/wagmi';
+
+
 const queryClient = new QueryClient();
 
-export const ethersProvider = new ethers.providers.JsonRpcProvider(
-  "https://eth-mainnet.public.blastapi.io"
-);
+export const wagmiConfig = createConfig({
+  chains: [arbitrumSepolia],
+  transports: {
+    [arbitrumSepolia.id]: http()
+  },
+});
 
 const privyConfig = {
   // Customize Privy's appearance in your app
@@ -35,16 +42,20 @@ const privyClientId = env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <PrivyProvider appId={privyAppId} clientId={privyClientId} config={privyConfig}>
-        <UserProvider>
-          <NuqsAdapter>
-            <NavigationProvider>
-              <BrianButtonProvider>{children}</BrianButtonProvider>
-            </NavigationProvider>
-          </NuqsAdapter>
-        </UserProvider>
-      </PrivyProvider>
-    </QueryClientProvider>
+    <PrivyProvider appId={privyAppId} clientId={privyClientId} config={privyConfig}>
+      <QueryClientProvider client={queryClient}>
+      
+          <UserProvider>
+            <NuqsAdapter>
+              <NavigationProvider>
+                <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
+                  <BrianButtonProvider>{children}</BrianButtonProvider>
+                </WagmiProvider>
+              </NavigationProvider>
+            </NuqsAdapter>
+          </UserProvider>
+
+      </QueryClientProvider>
+    </PrivyProvider>
   );
 };

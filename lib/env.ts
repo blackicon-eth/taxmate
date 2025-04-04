@@ -30,6 +30,13 @@ export const env = createEnv({
 
     // BRIAN
     NEXT_PUBLIC_BRIAN_ENDPOINT: z.string().min(1),
+
+    
+    NEXT_PUBLIC_AAVE_POOL_ADDRESS: z.string().min(1),
+    NEXT_PUBLIC_USDC_ADDRESS: z.string().min(1),
+    NEXT_PUBLIC_WETH_ADDRESS: z.string().min(1),
+    NEXT_PUBLIC_ATOKEN_ADDRESS: z.string().min(1),
+    NEXT_PUBLIC_VAULT_ADDRESS: z.string().min(1),
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   experimental__runtimeEnv: {
@@ -37,5 +44,10 @@ export const env = createEnv({
     NEXT_PUBLIC_PRIVY_CLIENT_ID: process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID,
     NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT: process.env.NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT,
     NEXT_PUBLIC_BRIAN_ENDPOINT: process.env.NEXT_PUBLIC_BRIAN_ENDPOINT,
+    NEXT_PUBLIC_AAVE_POOL_ADDRESS: process.env.NEXT_PUBLIC_AAVE_POOL_ADDRESS,
+    NEXT_PUBLIC_USDC_ADDRESS: process.env.NEXT_PUBLIC_USDC_ADDRESS,
+    NEXT_PUBLIC_WETH_ADDRESS: process.env.NEXT_PUBLIC_WETH_ADDRESS,
+    NEXT_PUBLIC_ATOKEN_ADDRESS: process.env.NEXT_PUBLIC_ATOKEN_ADDRESS,
+    NEXT_PUBLIC_VAULT_ADDRESS: process.env.NEXT_PUBLIC_VAULT_ADDRESS,
   },
 });

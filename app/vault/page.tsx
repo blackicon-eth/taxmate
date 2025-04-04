@@ -19,6 +19,10 @@ import { useRegisteredUser } from "@/components/providers/user-provider";
 import { Skeleton } from "@/components/shadcn-ui/skeleton";
 import { CsvDownloadModal } from "@/components/custom-ui/csv-download-modal";
 import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
+import { env } from "@/lib/env";
+import { vaultAbi } from "@/lib/abi/vault";
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { erc20Abi } from "@/lib/abi/erc20";
 
 export default function VaultPage() {
   const { userTransactions } = useRegisteredUser();
@@ -29,6 +33,7 @@ export default function VaultPage() {
 
   const [ROI, setROI] = useState<number>(0);
   const [isRebalancing, setIsRebalancing] = useState(false);
+  const [amount, setAmount] = useState("");
   const [vaultDistribution, setVaultDistribution] =
     useState<VaultDistribution[]>(mockVaultDonutChartData);
   const totalDeposited = useCountUp(startingAmount, 1500);
@@ -58,6 +63,93 @@ export default function VaultPage() {
       setROI(((endingAmount - startingAmount) / startingAmount) * 100);
     }
   }, [userTransactions]);
+  const { vault_data } = useReadContract({
+    address: env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`,
+    abi: vaultAbi,
+    functionName: "vaultData",
+  });
+
+  const {
+    data: depositTxHash,
+    isPending: isDepositPending,
+    error: depositError,
+    writeContract: writeDepositContract,
+  } = useWriteContract();
+
+  const {
+    data: approvalTxHash,
+    isPending: isApprovalPending,
+    error: approvalError,
+    writeContract: writeApprovalContract,
+  } = useWriteContract();
+
+  
+  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash })
+
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Only allow numbers and at most one decimal point
+    // Regex explanation: 
+    // ^ - start of string
+    // \d* - zero or more digits
+    // (\\.\d*)? - optional group of decimal point followed by zero or more digits
+    // $ - end of string
+    if (value === '' || /^\d*(\.\d*)?$/.test(value)) {
+      setAmount(value);
+    }
+  };
+  
+
+  useEffect(() => {
+    if (isApprovalConfirmed) {
+      // Convert amount to USDC base units (6 decimals)
+      const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
+  
+      // Check for valid number and handle edge cases
+      if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
+        toast.error("Invalid amount");
+        return;
+      }
+      
+      // Round to handle potential floating point issues and convert to BigInt
+      const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
+          
+      writeDepositContract({
+        address: env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`,
+        abi: vaultAbi,
+        functionName: "deposit",
+        args: [amountInUSDCBigInt],
+      });
+    }
+  }, [isApprovalConfirmed])
+
+  const handleDeposit = async () => {
+    try {
+      // Convert amount to USDC base units (6 decimals)
+      const amountInUSDC = parseFloat(amount || "0") * 1_000_000;
+      
+      // Check for valid number and handle edge cases
+      if (isNaN(amountInUSDC) || amountInUSDC <= 0) {
+        toast.error("Invalid amount");
+        return;
+      }
+      
+      // Round to handle potential floating point issues and convert to BigInt
+      const amountInUSDCBigInt = BigInt(Math.floor(amountInUSDC));
+      
+      writeApprovalContract({
+        address: env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`, amountInUSDCBigInt],
+      });
+      
+    } catch (error) {
+      toast.error("Failed to deposit");
+    }
+  };
 
   const handleRebalance = async () => {
     setIsRebalancing(true);
@@ -79,7 +171,7 @@ export default function VaultPage() {
       setIsRebalancing(false);
     }
   };
-
+  
   return (
     <motion.div
       key="vault"
@@ -125,11 +217,11 @@ export default function VaultPage() {
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
-                <Input placeholder="Amount" />
+                <Input placeholder="Amount" value={amount} onChange={handleAmountChange} />
                 <button className="hover:underline cursor-pointer">Max</button>
               </div>
               <div className="flex gap-2">
-                <AnimatedButton onClick={() => {}} className="w-full h-[38px] text-sm">
+                <AnimatedButton onClick={handleDeposit} className="w-full h-[38px] text-sm">
                   DEPOSIT
                 </AnimatedButton>
                 <AnimatedButton
