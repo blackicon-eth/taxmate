@@ -14,9 +14,6 @@
     "db:pull": "drizzle-kit pull"
   },
   "dependencies": {
-    "@aave/contract-helpers": "^1.33.1",
-    "@aave/math-utils": "^1.33.1",
-    "@bgd-labs/aave-address-book": "^4.17.2",
     "@libsql/client": "^0.15.2",
     "@privy-io/react-auth": "^2.8.0",
     "@privy-io/server-auth": "^1.19.2",

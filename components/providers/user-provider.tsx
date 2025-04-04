@@ -1,7 +1,7 @@
 "use client";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { FullPageLoader } from "../custom-ui/fullpage-loader";
-import { DbUser } from "@/lib/db/schemas/db.schema";
+import { DbUser, Transaction } from "@/lib/db/schemas/db.schema";
 import ky from "ky";
 import { useQuery } from "@tanstack/react-query";
 import { usePrivy } from "@privy-io/react-auth";
@@ -11,6 +11,12 @@ const UserProviderContext = createContext<
   | {
       dbUser: DbUser | undefined;
       refetchUser: () => void;
+      userTransactions: {
+        aave: Transaction[] | undefined;
+        vault: Transaction[] | undefined;
+        all: Transaction[] | undefined;
+      };
+      refetchTransactions: () => void;
     }
   | undefined
 >(undefined);
@@ -51,8 +57,35 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     enabled: !!ready && !!authenticated,
   });
 
+  const {
+    data: transactions,
+    error: transactionsError,
+    refetch: refetchTransactions,
+  } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => {
+      const response = await ky.get<Transaction[]>("/api/transactions").json();
+      const sortedTransactions = [...response].sort((a, b) => {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+      return sortedTransactions;
+    },
+    enabled: !!ready && !!authenticated,
+  });
+
+  const userAAVETransactions = useMemo(
+    () => transactions?.filter((transaction) => transaction.protocol === "AAVE"),
+    [transactions]
+  );
+
+  const userVaultTransactions = useMemo(
+    () => transactions?.filter((transaction) => transaction.protocol === "VAULT"),
+    [transactions]
+  );
+
   // Error state
-  if (userError) return <FullPageError errorMessage={userError.message} />;
+  if (userError || transactionsError)
+    return <FullPageError errorMessage={userError?.message || transactionsError?.message} />;
 
   // Loading state
   if (!isPrivyReady) return <FullPageLoader />;
@@ -61,7 +94,13 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     <UserProviderContext.Provider
       value={{
         dbUser,
+        userTransactions: {
+          aave: userAAVETransactions,
+          vault: userVaultTransactions,
+          all: transactions,
+        },
         refetchUser,
+        refetchTransactions,
       }}
     >
       {children}

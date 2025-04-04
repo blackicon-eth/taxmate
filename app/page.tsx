@@ -28,7 +28,7 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center">
         <img src="/images/taxmate-logo-no-bg.png" alt="logo" className="w-[500px] h-auto" />
         <p className="text-6xl text-secondary font-bold leading-14">
-          Don&apos;t Let Cash Sleep
+          Do not Let Cash Sleep
           <br />
           Turn Surplus Into Yield
         </p>

@@ -18,109 +18,109 @@ export const mockVaultDonutChartData = [
 export const mockSimpleLineChartData = [
   {
     date: "Feb 01",
-    Earned: 0,
+    earned: 0,
   },
   {
     date: "Feb 15",
-    Earned: 5,
+    earned: 5,
   },
   {
     date: "Mar 01",
-    Earned: 9,
+    earned: 9,
   },
   {
     date: "Mar 15",
-    Earned: 13,
+    earned: 13,
   },
   {
     date: "Apr 01",
-    Earned: 13,
+    earned: 13,
   },
   {
     date: "Apr 15",
-    Earned: 13,
+    earned: 13,
   },
   {
     date: "May 01",
-    Earned: 19,
+    earned: 19,
   },
   {
     date: "Jun 15",
-    Earned: 25,
+    earned: 25,
   },
   {
     date: "Jul 01",
-    Earned: 29,
+    earned: 29,
   },
   {
     date: "Aug 15",
-    Earned: 38,
+    earned: 38,
   },
   {
     date: "Sep 01",
-    Earned: 44,
+    earned: 44,
   },
   {
     date: "Oct 01",
-    Earned: 45,
+    earned: 45,
   },
   {
     date: "Nov 01",
-    Earned: 50,
+    earned: 50,
   },
   {
     date: "Dec 01",
-    Earned: 52,
+    earned: 52,
   },
 ];
 
 export const mockVaultLineChartData = [
   {
     date: "Feb 01",
-    Earned: 0,
+    earned: 0,
   },
   {
     date: "Feb 15",
-    Earned: 5,
+    earned: 5,
   },
   {
     date: "Mar 01",
-    Earned: 9,
+    earned: 9,
   },
   {
     date: "Apr 15",
-    Earned: -13,
+    earned: -13,
   },
   {
     date: "May 01",
-    Earned: 19,
+    earned: 19,
   },
   {
     date: "Jun 15",
-    Earned: 18,
+    earned: 18,
   },
   {
     date: "Jul 01",
-    Earned: 14,
+    earned: 14,
   },
   {
     date: "Aug 15",
-    Earned: 25,
+    earned: 25,
   },
   {
     date: "Sep 01",
-    Earned: 26,
+    earned: 26,
   },
   {
     date: "Oct 01",
-    Earned: 23,
+    earned: 23,
   },
   {
     date: "Nov 01",
-    Earned: 36,
+    earned: 36,
   },
   {
     date: "Dec 01",
-    Earned: 56,
+    earned: 56,
   },
 ];

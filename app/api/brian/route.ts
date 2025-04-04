@@ -21,7 +21,7 @@ export const POST = async (request: NextRequest) => {
         json: {
           prompt: message,
         },
-        timeout: 30000, // 30 second timeout
+        timeout: false,
       })
       .json();
 

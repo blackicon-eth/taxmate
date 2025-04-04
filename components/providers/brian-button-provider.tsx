@@ -127,6 +127,7 @@ export const BrianModal = ({ children }: BrianModalProps) => {
             json: {
               message,
             },
+            timeout: false,
           })
           .json();
         setChat([
@@ -273,6 +274,7 @@ export const BrianModal = ({ children }: BrianModalProps) => {
                 type="button"
                 onClick={() => setChat([])}
                 className="w-1/6 h-[34px] text-sm rounded-md text-black cursor-pointer bg-secondary"
+                disabled={isLoading}
               >
                 Clear
               </AnimatedButton>

@@ -13,10 +13,27 @@ import {
 } from "@/components/shadcn-ui/dropdown-menu";
 import { AnimatedButton } from "./animated-button";
 import { usePrivy } from "@privy-io/react-auth";
+import { useState } from "react";
+import { Copy, Loader2, Check } from "lucide-react";
+import { toast } from "sonner";
+
 export const Header = () => {
   const { logout } = usePrivy();
   const { dbUser } = useRegisteredUser();
   const pathname = usePathname();
+  const [isCopying, setIsCopying] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
+
+  const handleCopy = (address: string) => {
+    setIsCopying(true);
+    navigator.clipboard.writeText(address);
+    setTimeout(() => {
+      setIsCopying(false);
+      setShowCheck(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setShowCheck(false), 1500);
+    }, 500);
+  };
 
   return (
     <motion.header
@@ -43,7 +60,7 @@ export const Header = () => {
                   pathname === "/simple" && "text-primary"
                 )}
               >
-                Simple
+                Simple Earn
               </motion.h1>
             </Link>
             <Link href="/vault">
@@ -56,7 +73,7 @@ export const Header = () => {
                   pathname === "/vault" && "text-primary"
                 )}
               >
-                Vault
+                Advanced Vault
               </motion.h1>
             </Link>
           </div>
@@ -79,9 +96,21 @@ export const Header = () => {
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="flex flex-col gap-0.5 w-full text-start pt-1">
               <label className="text-sm text-secondary">Logged in as:</label>
-              <p className="text-sm text-primary">
-                {truncateAddress(dbUser?.walletAddress ?? "", 7)}
-              </p>
+              <button
+                className="flex justify-start items-center gap-1 cursor-pointer"
+                onClick={() => handleCopy(dbUser?.walletAddress ?? "")}
+              >
+                <p className="text-sm text-primary underline">
+                  {truncateAddress(dbUser?.walletAddress ?? "", 7)}
+                </p>
+                {isCopying ? (
+                  <Loader2 className="animate-spin" />
+                ) : showCheck ? (
+                  <Check className="text-green-500" />
+                ) : (
+                  <Copy />
+                )}
+              </button>
             </DropdownMenuLabel>
             <div className="flex justify-center items-center mt-2 mb-3">
               <AnimatedButton
