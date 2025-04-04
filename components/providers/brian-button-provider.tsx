@@ -17,6 +17,7 @@ import { AnimatedButton } from "@/components/custom-ui/animated-button";
 import { ScrollArea } from "../shadcn-ui/scroll-area";
 import ky from "ky";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "assistant";
@@ -134,7 +135,7 @@ export const BrianModal = ({ children }: BrianModalProps) => {
           { role: "assistant" as const, content: response, timestamp: Date.now() },
         ]);
       } catch (error) {
-        console.error(error);
+        toast.error("Something went wrong, please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -145,9 +146,21 @@ export const BrianModal = ({ children }: BrianModalProps) => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex flex-col bg-card w-[876px]">
-        <DialogHeader className="flex flex-col justify-center items-start gap-0.5">
-          <DialogTitle className="text-2xl font-bold">Ask Brian</DialogTitle>
-          <DialogDescription>Ask Brian about anything web3 related!</DialogDescription>
+        <DialogHeader className="flex flex-row justify-start items-center gap-2.5">
+          <img src="/images/brian-logo.png" alt="Brian" className="size-14" />
+          <div className="flex flex-col justify-center items-start gap-0.5">
+            <DialogTitle className="text-2xl font-bold">
+              Ask{" "}
+              <a
+                href="https://www.brianknows.org/"
+                className="text-primary underline"
+                target="_blank"
+              >
+                Brian
+              </a>
+            </DialogTitle>
+            <DialogDescription>Ask Brian about anything web3 related!</DialogDescription>
+          </div>
         </DialogHeader>
         <div className="flex flex-col justify-start items-center size-full">
           <ScrollArea
@@ -249,7 +262,7 @@ export const BrianModal = ({ children }: BrianModalProps) => {
               <AnimatedButton
                 type="submit"
                 className="w-1/6 h-[34px] text-sm rounded-md text-white bg-primary cursor-pointer"
-                isLoading={isLoading}
+                disabled={isLoading}
                 loaderSize={20}
               >
                 SEND

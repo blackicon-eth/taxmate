@@ -8,7 +8,7 @@ interface AnimatedButtonProps {
   onClick?: () => void;
   className?: string;
   index?: number;
-  isLoading?: boolean;
+  disabled?: boolean;
   type?: "button" | "submit";
   loaderSize?: number;
 }
@@ -18,7 +18,7 @@ export const AnimatedButton = ({
   onClick,
   className,
   index = 0,
-  isLoading = false,
+  disabled = false,
   type = "button",
   loaderSize = 28,
 }: AnimatedButtonProps) => {
@@ -28,17 +28,17 @@ export const AnimatedButton = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25, delay: 0.25 * index }}
-      whileHover={{ scale: isLoading ? 1 : 1.03, opacity: isLoading ? 1 : 0.9 }}
-      whileTap={{ scale: isLoading ? 1 : 0.97 }}
+      whileHover={{ scale: disabled ? 1 : 1.03, opacity: disabled ? 1 : 0.9 }}
+      whileTap={{ scale: disabled ? 1 : 0.97 }}
       className={cn(
         "flex justify-center items-center bg-primary text-secondary h-[64px] w-[166px] text-2xl font-bold cursor-pointer rounded-full",
-        isLoading && "bg-primary/50",
+        disabled && "bg-primary/50",
         className
       )}
-      onClick={() => !isLoading && onClick?.()}
+      onClick={() => !disabled && onClick?.()}
     >
-      {isLoading ? (
-        <Loader2 className={cn("animate-spin", isLoading && "opacity-50")} size={loaderSize} />
+      {disabled ? (
+        <Loader2 className={cn("animate-spin", disabled && "opacity-50")} size={loaderSize} />
       ) : (
         children
       )}

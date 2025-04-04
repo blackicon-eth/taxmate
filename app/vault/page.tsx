@@ -6,13 +6,17 @@ import { usePrivy } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
 import { mockVaultDonutChartData, mockVaultLineChartData } from "@/lib/constants";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { DonutChart } from "@/components/tremor-charts/donut-chart";
 import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
+import ky from "ky";
+import { toast } from "sonner";
+
 export default function VaultPage() {
+  const [isRebalancing, setIsRebalancing] = useState(false);
   const totalDeposited = useCountUp(240.01, 1500);
   const totalEarned = useCountUp(56.0, 1500);
   const currentAPY = useCountUp(12.3, 1500);
@@ -24,6 +28,21 @@ export default function VaultPage() {
       router.push("/");
     }
   }, [authenticated]);
+
+  const handleRebalance = async () => {
+    setIsRebalancing(true);
+    try {
+      const tokenIds = "3375,3306,4425";
+      const response = await ky
+        .get(`/api/token-metrics/investor-grades?tokenIds=${tokenIds}`)
+        .json();
+      console.log(response);
+    } catch (error) {
+      toast.error("Failed to rebalance");
+    } finally {
+      setIsRebalancing(false);
+    }
+  };
 
   return (
     <motion.div
@@ -92,9 +111,9 @@ export default function VaultPage() {
 
             {/* Charts */}
             <div className="flex justify-between items-center size-full">
-              <div className="flex flex-col w-1/2 h-full justify-end items-center gap-9">
+              <div className="flex flex-col w-1/2 h-full justify-end items-center gap-4">
                 <DonutChart
-                  className="h-[67%] w-full"
+                  className="h-[60%] w-full"
                   data={mockVaultDonutChartData}
                   variant="pie"
                   category="name"
@@ -103,7 +122,16 @@ export default function VaultPage() {
                     `${Intl.NumberFormat("us").format(number).toString()}%`
                   }
                 />
-                <p className="text-xl font-bold">Vault Distribution</p>
+                <div className="flex flex-col justify-center items-center gap-1">
+                  <p className="text-xl font-bold">Vault Distribution</p>
+                  <AnimatedButton
+                    onClick={handleRebalance}
+                    className="w-[122px] h-[38px] text-sm"
+                    disabled={isRebalancing}
+                  >
+                    {isRebalancing ? "Rebalancing..." : "Rebalance"}
+                  </AnimatedButton>
+                </div>
               </div>
 
               <LineChart

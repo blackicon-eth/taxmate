@@ -25,6 +25,9 @@ export const env = createEnv({
     NEXT_PUBLIC_PRIVY_APP_ID: z.string().min(1),
     NEXT_PUBLIC_PRIVY_CLIENT_ID: z.string().min(1),
 
+    // TOKEN METRICS
+    NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT: z.string().min(1),
+
     // BRIAN
     NEXT_PUBLIC_BRIAN_ENDPOINT: z.string().min(1),
   },
@@ -32,6 +35,7 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
     NEXT_PUBLIC_PRIVY_CLIENT_ID: process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID,
+    NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT: process.env.NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT,
     NEXT_PUBLIC_BRIAN_ENDPOINT: process.env.NEXT_PUBLIC_BRIAN_ENDPOINT,
   },
 });
