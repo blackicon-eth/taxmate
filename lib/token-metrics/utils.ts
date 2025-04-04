@@ -65,8 +65,6 @@ export function calculateRebalancing(
     }
   }
 
-  console.log("totalPortfolioValue", totalPortfolioValue);
-
   // Calculate target allocations in USD
   const targetAllocationsUSD: { [token: string]: number } = {};
   for (const token in targetPercentages) {

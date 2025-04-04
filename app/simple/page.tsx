@@ -42,16 +42,12 @@ export default function SimplePage() {
           earned: transaction.amountUSD,
         }))
       );
-      setStartingAmount(userTransactions.aave[0].amountUSD);
-      setEndingAmount(userTransactions.aave[userTransactions.aave.length - 1].amountUSD);
+      setStartingAmount(userTransactions.aave?.[0]?.amountUSD ?? 0);
+      setEndingAmount(userTransactions.aave?.[userTransactions.aave.length - 1]?.amountUSD ?? 0);
 
       setMinValue(Math.min(...userTransactions.aave.map((transaction) => transaction.amountUSD)));
     }
   }, [userTransactions]);
-
-  useEffect(() => {
-    console.log(lineChartData);
-  }, [lineChartData]);
 
   return (
     <motion.div
@@ -146,7 +142,6 @@ export default function SimplePage() {
                   valueFormatter={(number: number) =>
                     `$${Intl.NumberFormat("us").format(number).toString()}`
                   }
-                  onValueChange={(v: any) => console.log(v)}
                   minValue={minValue * 0.9999}
                 />
               </motion.div>

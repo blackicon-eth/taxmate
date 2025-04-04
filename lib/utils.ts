@@ -44,3 +44,10 @@ export const hasErrorInput = [
   // ring color
   "ring-red-200 dark:ring-red-700/30",
 ];
+
+// Format date to ISO string
+// e.g. 2022-01-19T22:00:00.000Z -> 2022-01-19 22:00:00
+export const formatDateToDatabase = (date: string | undefined) => {
+  if (!date) return "No date";
+  return new Date(date).toISOString().replace("T", " ").split(".")[0];
+};

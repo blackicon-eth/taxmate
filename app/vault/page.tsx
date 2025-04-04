@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
-import { mockVaultDonutChartData, mockVaultLineChartData } from "@/lib/constants";
+import { mockVaultDonutChartData } from "@/lib/constants";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { DonutChart } from "@/components/tremor-charts/donut-chart";
 import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
@@ -51,8 +51,8 @@ export default function VaultPage() {
           earned: transaction.amountUSD,
         }))
       );
-      setStartingAmount(userTransactions.vault[0].amountUSD);
-      setEndingAmount(userTransactions.vault[userTransactions.vault.length - 1].amountUSD);
+      setStartingAmount(userTransactions.vault?.[0]?.amountUSD ?? 0);
+      setEndingAmount(userTransactions.vault?.[userTransactions.vault.length - 1]?.amountUSD ?? 0);
 
       setMinValue(Math.min(...userTransactions.vault.map((transaction) => transaction.amountUSD)));
       setROI(((endingAmount - startingAmount) / startingAmount) * 100);

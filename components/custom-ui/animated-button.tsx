@@ -34,7 +34,7 @@ export const AnimatedButton = ({
       whileHover={{ scale: isDisabled ? 1 : 1.03, opacity: isDisabled ? 1 : 0.9 }}
       whileTap={{ scale: isDisabled ? 1 : 0.97 }}
       className={cn(
-        "flex justify-center items-center bg-primary text-secondary h-[64px] w-[166px] text-2xl font-bold cursor-pointer rounded-full",
+        "flex justify-center items-center bg-primary text-white h-[64px] w-[166px] text-2xl font-bold cursor-pointer rounded-full",
         isDisabled && "bg-primary/50 cursor-not-allowed",
         className
       )}
