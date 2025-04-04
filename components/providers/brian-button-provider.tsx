@@ -84,14 +84,13 @@ interface BrianModalProps {
 
 export const BrianModal = ({ children }: BrianModalProps) => {
   const { chat, setChat } = useBrianChatStore();
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (viewportRef.current) {
-      console.log("isOpen", isOpen);
       viewportRef.current.scrollTo({
         top: viewportRef.current.scrollHeight,
         behavior: "smooth",
@@ -249,7 +248,9 @@ export const BrianModal = ({ children }: BrianModalProps) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSendMessage(message);
+                if (message) {
+                  handleSendMessage(message);
+                }
               }}
               className="flex justify-center items-center size-full gap-2"
             >
@@ -262,7 +263,8 @@ export const BrianModal = ({ children }: BrianModalProps) => {
               <AnimatedButton
                 type="submit"
                 className="w-1/6 h-[34px] text-sm rounded-md text-white bg-primary cursor-pointer"
-                disabled={isLoading}
+                disabled={!message}
+                isLoading={isLoading}
                 loaderSize={20}
               >
                 SEND

@@ -7,8 +7,14 @@ import { env } from "@/lib/env";
 import { NavigationProvider } from "@/components/providers/navigation-provider";
 import { UserProvider } from "@/components/providers/user-provider";
 import { BrianButtonProvider } from "@/components/providers/brian-button-provider";
+import { ethers } from "ethers";
+import { arbitrumSepolia } from "viem/chains";
 
 const queryClient = new QueryClient();
+
+export const ethersProvider = new ethers.providers.JsonRpcProvider(
+  "https://eth-mainnet.public.blastapi.io"
+);
 
 const privyConfig = {
   // Customize Privy's appearance in your app
@@ -21,6 +27,7 @@ const privyConfig = {
   embeddedWallets: {
     createOnLogin: "users-without-wallets",
   },
+  defaultChain: arbitrumSepolia,
 } as PrivyClientConfig;
 
 const privyAppId = env.NEXT_PUBLIC_PRIVY_APP_ID;

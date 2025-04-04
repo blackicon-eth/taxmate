@@ -1,8 +1,28 @@
 import ky from "ky";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
+import { calculatePortfolioAllocations, calculateRebalancing } from "@/lib/token-metrics/utils";
+import {
+  CurrentAllocations,
+  TMInvestorGradeResponse,
+  TargetPercentages,
+  TokenAllocation,
+  TokenPrices,
+} from "@/lib/token-metrics/types";
 
-// https://api.tokenmetrics.com/v2/investor-grades?token_id=3375%2C3306%2C4425&startDate=2024-01-01&endDate=2025-04-03&limit=3&page=0
+const actualAllocationsAmounts: CurrentAllocations = {
+  ETH: 5.4,
+  BTC: 0.67,
+  UNI: 22.76,
+  USDC: 5000,
+};
+
+const tokenPrices: TokenPrices = {
+  ETH: 1770.69, // Current price of ETH in USD
+  BTC: 81982.0, // Current price of BTC in USD
+  UNI: 5.7, // Current price of UNI in USD
+  USDC: 1.0, // Current price of USDC in USD
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -16,7 +36,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Get the start date
+  // Start date
   const startDate = "2024-01-01";
 
   // Get the end date
@@ -28,7 +48,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await ky
-      .get(
+      .get<TMInvestorGradeResponse>(
         `${env.NEXT_PUBLIC_TOKEN_METRICS_ENDPOINT}/investor-grades?token_id=${encodeURIComponent(
           tokenIds
         )}&startDate=${startDate}&endDate=${endDate}&limit=${limit}&page=0`,
@@ -41,7 +61,23 @@ export async function GET(request: NextRequest) {
       )
       .json();
 
-    return NextResponse.json(response, { status: 200 });
+    const desiredAllocations: TargetPercentages = calculatePortfolioAllocations(response.data);
+    console.log(desiredAllocations);
+
+    const rebalancing: TokenAllocation = calculateRebalancing(
+      actualAllocationsAmounts,
+      desiredAllocations,
+      tokenPrices
+    );
+    console.log(rebalancing);
+
+    // Calculate the total amount to rebalance by multiplying the amount by the price
+    const rebalanceAmount = Object.values(rebalancing).reduce((acc, curr) => {
+      return acc + curr.amount * tokenPrices[curr.tokenSymbol];
+    }, 0);
+    console.log("rebalanceAmount", rebalanceAmount);
+
+    return NextResponse.json(desiredAllocations, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch data from Token Metrics" }, { status: 500 });

@@ -4,7 +4,6 @@ import { AnimatedButton } from "@/components/custom-ui/animated-button";
 import { Input } from "@/components/shadcn-ui/input";
 import { usePrivy } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -14,12 +13,16 @@ import { DonutChart } from "@/components/tremor-charts/donut-chart";
 import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
 import ky from "ky";
 import { toast } from "sonner";
+import { VaultDistribution } from "@/lib/types";
+import { TargetPercentages } from "@/lib/token-metrics/types";
 
 export default function VaultPage() {
   const [isRebalancing, setIsRebalancing] = useState(false);
+  const [vaultDistribution, setVaultDistribution] =
+    useState<VaultDistribution[]>(mockVaultDonutChartData);
   const totalDeposited = useCountUp(240.01, 1500);
   const totalEarned = useCountUp(56.0, 1500);
-  const currentAPY = useCountUp(12.3, 1500);
+  const currentAPY = useCountUp(2.44, 1500);
   const { authenticated } = usePrivy();
   const router = useRouter();
 
@@ -34,9 +37,15 @@ export default function VaultPage() {
     try {
       const tokenIds = "3375,3306,4425";
       const response = await ky
-        .get(`/api/token-metrics/investor-grades?tokenIds=${tokenIds}`)
+        .get<TargetPercentages>(`/api/token-metrics/investor-grades?tokenIds=${tokenIds}`)
         .json();
       console.log(response);
+      setVaultDistribution(
+        Object.entries(response).map(([token, amount]) => ({
+          name: token,
+          amount: amount,
+        }))
+      );
     } catch (error) {
       toast.error("Failed to rebalance");
     } finally {
@@ -59,16 +68,24 @@ export default function VaultPage() {
           {/* AAVE Card */}
           <div className="flex flex-col justify-between gap-2 bg-card p-5 rounded-lg w-1/4 h-[70%]">
             <div className="flex flex-col gap-4">
-              <h2 className="text-2xl font-bold">
-                Deposit your cash on{" "}
-                <span className="text-primary underline">
-                  <Link href="https://aave.com" target="_blank">
-                    AAVE
-                  </Link>
-                </span>{" "}
-                and start earning
-              </h2>
-              <p className="text-sm text-secondary">Withdraw whenever you want</p>
+              <div className="flex justify-start items-center gap-3.5">
+                <img src="/images/tm-logo.webp" alt="aave-logo" className="size-14" />
+                <h2 className="text-2xl font-bold">
+                  <a
+                    className="text-primary underline"
+                    href="https://app.tokenmetrics.com/en/ratings"
+                    target="_blank"
+                  >
+                    Token Metrics
+                  </a>
+                  <br />
+                  Advanced Vault
+                </h2>
+              </div>
+              <p className="text-sm text-secondary">
+                Deposit your cash on our advanced investment Vault and start earning. <br />
+                The Vault is rebalanced daily following Token Metrics recommendations and insights.
+              </p>
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
@@ -104,7 +121,7 @@ export default function VaultPage() {
               </div>
 
               <div className="flex flex-col justify-center items-center gap-1">
-                <h1 className="text-lg font-bold">Current APY %</h1>
+                <h1 className="text-lg font-bold">Current ROI %</h1>
                 <p className="text-3xl text-primary font-bold">{currentAPY}%</p>
               </div>
             </div>
@@ -114,7 +131,7 @@ export default function VaultPage() {
               <div className="flex flex-col w-1/2 h-full justify-end items-center gap-4">
                 <DonutChart
                   className="h-[60%] w-full"
-                  data={mockVaultDonutChartData}
+                  data={vaultDistribution}
                   variant="pie"
                   category="name"
                   value="amount"
@@ -128,6 +145,7 @@ export default function VaultPage() {
                     onClick={handleRebalance}
                     className="w-[122px] h-[38px] text-sm"
                     disabled={isRebalancing}
+                    loaderSize={20}
                   >
                     {isRebalancing ? "Rebalancing..." : "Rebalance"}
                   </AnimatedButton>

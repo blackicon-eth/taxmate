@@ -15,7 +15,7 @@ import { BrianButton, BrianModal } from "@/components/providers/brian-button-pro
 export default function SimplePage() {
   const totalDeposited = useCountUp(100.98, 1500);
   const totalEarned = useCountUp(15.56, 1500);
-  const currentAPY = useCountUp(6.5, 1500);
+  const currentAPY = useCountUp(2.44, 1500);
   const { authenticated } = usePrivy();
   const router = useRouter();
 
@@ -40,16 +40,18 @@ export default function SimplePage() {
           {/* AAVE Card */}
           <div className="flex flex-col justify-between gap-2 bg-card p-5 rounded-lg w-1/4 h-[70%]">
             <div className="flex flex-col gap-4">
-              <h2 className="text-2xl font-bold">
-                Deposit your cash on{" "}
-                <span className="text-primary underline">
-                  <Link href="https://aave.com" target="_blank">
+              <div className="flex justify-start items-center gap-3.5">
+                <img src="/images/aave-logo.webp" alt="aave-logo" className="size-14" />
+                <h2 className="text-2xl font-bold">
+                  <a className="text-primary underline" href="https://aave.com" target="_blank">
                     AAVE
-                  </Link>
-                </span>{" "}
-                and start earning
-              </h2>
-              <p className="text-sm text-secondary">Withdraw whenever you want</p>
+                  </a>{" "}
+                  Pool <br /> Deposit and Forget
+                </h2>
+              </div>
+              <p className="text-sm text-secondary">
+                Deposit your cash on AAVE and start earning simply. Withdraw whenever you want
+              </p>
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
