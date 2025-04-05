@@ -85,6 +85,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   } = useQuery({
     queryKey: ["movements"],
     queryFn: async () => await ky.get<Movement[]>("/api/movements").json(),
+    enabled: !!ready && !!authenticated,
   });
 
   const userAAVETransactions = useMemo(

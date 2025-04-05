@@ -42,7 +42,7 @@ export default function VaultPage() {
 
   const totalDeposited = useCountUp(deposited, 1500);
   const totalEarned = useCountUp(earned, 1500);
-  const currentAPY = useCountUp(2.44, 1500);
+  const currentAPY = useCountUp(12.44, 1500);
 
   const currentVAULTBalance = useCountUp(0, 1500);
 
