@@ -1,9 +1,7 @@
 "use client";
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import { DbUser, Movement, Transaction } from "@/lib/db/schemas/db.schema";
 import { USDC_ADDRESS, VAULT_ADDRESS, WBTC_ADDRESS, WETH_ADDRESS } from "@/lib/constants";
 import { useReadContract } from "wagmi";
-import { vaultAbi } from "@/lib/abi/vault";
 import { erc20Abi } from "@/lib/abi/erc20";
 import { getWETHPrice } from "@/lib/token-metrics/utils";
 import { getWBTCPrice } from "@/lib/token-metrics/utils";

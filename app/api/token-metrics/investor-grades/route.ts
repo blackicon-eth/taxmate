@@ -14,7 +14,7 @@ import {
   TokenAllocation,
   TokenPrices,
 } from "@/lib/token-metrics/types";
-import { createPublicClient, createWalletClient, http, parseEther } from "viem";
+import { createPublicClient, createWalletClient, http } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { erc20Abi } from "@/lib/abi/erc20";
@@ -58,12 +58,6 @@ export async function GET(request: NextRequest) {
     BTC: wbtcPrice,
     USDC: 1.0,
   };
-
-  // Calculate total portfolio value in USD
-  const totalPortfolioValue =
-    (Number(wethBalance) / 1e18) * wethPrice +
-    (Number(wbtcBalance) / 1e18) * wbtcPrice +
-    Number(usdcBalance) / 1e6;
 
   // Calculate actual token amounts (in their native units with correct decimals)
   const currentAllocationsAmounts: CurrentAllocations = {

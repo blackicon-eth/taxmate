@@ -20,13 +20,13 @@ import { Skeleton } from "@/components/shadcn-ui/skeleton";
 import { CsvDownloadModal } from "@/components/custom-ui/csv-download-modal";
 import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
 import { vaultAbi } from "@/lib/abi/vault";
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { erc20Abi } from "@/lib/abi/erc20";
 import { Transaction } from "@/lib/db/schemas/db.schema";
 import { useVaultDistribution } from "@/components/providers/vault-distribution-provider";
 
 export default function VaultPage() {
-  const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
+  const { userTransactions, userMovements } = useRegisteredUser();
   const { vaultDistribution: initialVaultDistribution } = useVaultDistribution();
   const [lineChartData, setLineChartData] = useState<LineChartData[]>([]);
   const [minValue, setMinValue] = useState<number>(0);
@@ -113,34 +113,20 @@ export default function VaultPage() {
     }
   }, [userTransactions]);
 
-  const createMovement = async (amount: number, isBuy: boolean) => {
-    try {
-      await ky.post("/api/movements/vault", {
-        body: JSON.stringify({ amount, isBuy }),
-      });
-      refetchMovements();
-    } catch (error) {
-      console.error("Error creating movement:", error);
-    }
-  };
+  // const createMovement = async (amount: number, isBuy: boolean) => {
+  //   try {
+  //     await ky.post("/api/movements/vault", {
+  //       body: JSON.stringify({ amount, isBuy }),
+  //     });
+  //     refetchMovements();
+  //   } catch (error) {
+  //     console.error("Error creating movement:", error);
+  //   }
+  // };
 
-  const {
-    data: depositTxHash,
-    isPending: isDepositPending,
-    error: depositError,
-    isSuccess: isDepositSuccess,
-    writeContract: writeDepositContract,
-  } = useWriteContract();
-
-  const {
-    data: approvalTxHash,
-    isPending: isApprovalPending,
-    error: approvalError,
-    writeContract: writeApprovalContract,
-  } = useWriteContract();
-
-  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } =
-    useWaitForTransactionReceipt({ hash: approvalTxHash });
+  const { writeContract: writeDepositContract } = useWriteContract();
+  const { data: approvalTxHash, writeContract: writeApprovalContract } = useWriteContract();
+  const { isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

@@ -2,7 +2,7 @@
 
 import { AnimatedButton } from "@/components/custom-ui/animated-button";
 import { Input } from "@/components/shadcn-ui/input";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -45,27 +45,11 @@ export default function SimplePage() {
 
   const currentAAVEBalance = useCountUp(userBalance ? Number(userBalance) / 1_000_000 : 0, 1500);
 
-  const {
-    data: depositTxHash,
-    isPending: isDepositPending,
-    error: depositError,
-    isSuccess: isDepositSuccess,
-    writeContract: writeDepositContract,
-  } = useWriteContract();
+  const { data: depositTxHash, writeContract: writeDepositContract } = useWriteContract();
 
-  const {
-    data: approvalTxHash,
-    isPending: isApprovalPending,
-    error: approvalError,
-    writeContract: writeApprovalContract,
-  } = useWriteContract();
+  const { data: approvalTxHash, writeContract: writeApprovalContract } = useWriteContract();
 
-  const {
-    data: withdrawTxHash,
-    isPending: isWithdrawPending,
-    error: withdrawError,
-    writeContract: writeWithdrawContract,
-  } = useWriteContract();
+  const { data: withdrawTxHash, writeContract: writeWithdrawContract } = useWriteContract();
 
   const { isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash });
   const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({ hash: withdrawTxHash });
