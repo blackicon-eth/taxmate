@@ -23,6 +23,7 @@ import { env } from "@/lib/env";
 import { vaultAbi } from "@/lib/abi/vault";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { erc20Abi } from "@/lib/abi/erc20";
+import { Transaction } from "@/lib/db/schemas/db.schema";
 
 export default function VaultPage() {
   const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
@@ -42,6 +43,8 @@ export default function VaultPage() {
   const totalEarned = useCountUp(earned, 1500);
   const currentAPY = useCountUp(2.44, 1500);
 
+  const currentVAULTBalance = useCountUp(0, 1500);
+
   useEffect(() => {
     if (!authenticated) {
       router.push("/");
@@ -51,7 +54,8 @@ export default function VaultPage() {
   useEffect(() => {
     if (userTransactions.vault) {
       // Get the last snapshot
-      const lastSnapshot = userTransactions.vault?.[userTransactions.vault.length - 1];
+      const lastSnapshot: Transaction | undefined =
+        userTransactions.vault?.[userTransactions.vault.length - 1];
 
       // The deposited amount is the last snapshot minus some eventual movements happened today
       const today = new Date();
@@ -67,7 +71,7 @@ export default function VaultPage() {
           }
           return acc - movement.amount;
         }, 0) ?? 0;
-      const currentDeposited = lastSnapshot.amountUSD - todayMovementsSum;
+      const currentDeposited = lastSnapshot?.amountUSD ?? 0 - todayMovementsSum;
 
       setLineChartData(
         userTransactions.vault.map((transaction, index) => {
@@ -98,7 +102,10 @@ export default function VaultPage() {
 
       // The earned amount is the last snapshot minus the movements sum minus the first snapshot
       setEarned(
-        lastSnapshot.amountUSD - firstSnapshot?.amountUSD - allMovementsSum + todayMovementsSum
+        (lastSnapshot?.amountUSD ?? 0) -
+          (firstSnapshot?.amountUSD ?? 0) -
+          allMovementsSum +
+          todayMovementsSum
       );
 
       setMinValue(Math.min(...userTransactions.vault.map((transaction) => transaction.amountUSD)));
@@ -260,6 +267,10 @@ export default function VaultPage() {
                 The Vault is rebalanced daily following Token Metrics recommendations and insights.
               </p>
             </div>
+            <div className="flex flex-col gap-2 w-full text-center">
+              <p className="text-3xl text-secondary font-semibold">Deposited Amount</p>
+              <p className="text-4xl text-primary font-bold">${currentVAULTBalance}</p>
+            </div>
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
                 <Input placeholder="Amount" value={amount} onChange={handleAmountChange} />
@@ -324,7 +335,9 @@ export default function VaultPage() {
                   </AnimatedButton>
                 </div>
               </div>
-              {lineChartData && lineChartData.length > 0 ? (
+              {!lineChartData ? (
+                <Skeleton className="h-[370px] w-full bg-card" />
+              ) : lineChartData && lineChartData.length > 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -345,7 +358,9 @@ export default function VaultPage() {
                   />
                 </motion.div>
               ) : (
-                <Skeleton className="h-[370px] w-full bg-card" />
+                <div className="flex justify-center items-center text-3xl text-white size-full text-center">
+                  No data to show yet
+                </div>
               )}
             </div>
           </div>

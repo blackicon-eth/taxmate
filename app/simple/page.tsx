@@ -19,6 +19,7 @@ import { erc20Abi } from "@/lib/abi/erc20";
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { AAVE_POOL_ADDRESS, AAVE_CONTRACT_ADDRESS, USDC_ADDRESS } from "@/lib/constants";
 import ky from "ky";
+import { Transaction } from "@/lib/db/schemas/db.schema";
 
 export default function SimplePage() {
   const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
@@ -79,7 +80,8 @@ export default function SimplePage() {
   useEffect(() => {
     if (userTransactions.aave) {
       // Get the last snapshot
-      const lastSnapshot = userTransactions.aave?.[userTransactions.aave.length - 1];
+      const lastSnapshot: Transaction | undefined =
+        userTransactions.aave?.[userTransactions.aave.length - 1];
 
       // The deposited amount is the last snapshot minus some eventual movements happened today
       const today = new Date();
@@ -95,7 +97,7 @@ export default function SimplePage() {
           }
           return acc - movement.amount;
         }, 0) ?? 0;
-      const currentDeposited = lastSnapshot.amountUSD + todayMovementsSum;
+      const currentDeposited = lastSnapshot ? lastSnapshot.amountUSD + todayMovementsSum : 0;
 
       setLineChartData(
         userTransactions.aave.map((transaction, index) => {
@@ -126,7 +128,10 @@ export default function SimplePage() {
 
       // The earned amount is the last snapshot minus the movements sum minus the first snapshot
       setEarned(
-        lastSnapshot.amountUSD - firstSnapshot?.amountUSD - allMovementsSum + todayMovementsSum
+        (lastSnapshot?.amountUSD ?? 0) -
+          (firstSnapshot?.amountUSD ?? 0) -
+          allMovementsSum +
+          todayMovementsSum
       );
 
       setMinValue(Math.min(...userTransactions.aave.map((transaction) => transaction.amountUSD)));
@@ -290,12 +295,10 @@ export default function SimplePage() {
                 Deposit your cash on AAVE and start earning simply. Withdraw whenever you want
               </p>
             </div>
-            {userBalance && userBalance > 0 ? (
-              <div className="flex flex-col gap-2 w-full text-center">
-                <p className="text-3xl text-secondary font-semibold">Deposited Amount</p>
-                <p className="text-4xl text-primary font-bold">${currentAAVEBalance.toFixed(2)}</p>
-              </div>
-            ) : null}
+            <div className="flex flex-col gap-2 w-full text-center">
+              <p className="text-3xl text-secondary font-semibold">Deposited Amount</p>
+              <p className="text-4xl text-primary font-bold">${currentAAVEBalance.toFixed(2)}</p>
+            </div>
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
                 <Input placeholder="Amount" value={amount} onChange={handleAmountChange} />
@@ -345,7 +348,9 @@ export default function SimplePage() {
             </div>
 
             {/* Chart */}
-            {lineChartData && lineChartData.length > 0 ? (
+            {!lineChartData ? (
+              <Skeleton className="h-[370px] w-full bg-card" />
+            ) : lineChartData && lineChartData.length > 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -365,7 +370,9 @@ export default function SimplePage() {
                 />
               </motion.div>
             ) : (
-              <Skeleton className="h-[370px] w-full bg-card" />
+              <div className="flex justify-center items-center text-3xl text-white size-full text-center">
+                No data to show yet
+              </div>
             )}
           </div>
         </div>

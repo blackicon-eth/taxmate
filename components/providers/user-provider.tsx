@@ -59,7 +59,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   } = useQuery({
     queryKey: ["user"],
     queryFn: () => ky.get<DbUser>("/api/user/sign-in").json(),
-    retry: false,
     enabled: !!ready && !!authenticated,
   });
 
