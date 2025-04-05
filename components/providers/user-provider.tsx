@@ -1,7 +1,7 @@
 "use client";
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { FullPageLoader } from "../custom-ui/fullpage-loader";
-import { DbUser, Transaction } from "@/lib/db/schemas/db.schema";
+import { DbUser, Movement, Transaction } from "@/lib/db/schemas/db.schema";
 import ky from "ky";
 import { useQuery } from "@tanstack/react-query";
 import { usePrivy } from "@privy-io/react-auth";
@@ -16,7 +16,13 @@ const UserProviderContext = createContext<
         vault: Transaction[] | undefined;
         all: Transaction[] | undefined;
       };
+      userMovements: {
+        aave: Movement[] | undefined;
+        vault: Movement[] | undefined;
+        all: Movement[] | undefined;
+      };
       refetchTransactions: () => void;
+      refetchMovements: () => void;
     }
   | undefined
 >(undefined);
@@ -53,7 +59,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   } = useQuery({
     queryKey: ["user"],
     queryFn: () => ky.get<DbUser>("/api/user/sign-in").json(),
-    retry: false,
     enabled: !!ready && !!authenticated,
   });
 
@@ -73,6 +78,15 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     enabled: !!ready && !!authenticated,
   });
 
+  const {
+    data: movements,
+    error: movementsError,
+    refetch: refetchMovements,
+  } = useQuery({
+    queryKey: ["movements"],
+    queryFn: async () => await ky.get<Movement[]>("/api/movements").json(),
+  });
+
   const userAAVETransactions = useMemo(
     () => transactions?.filter((transaction) => transaction.protocol === "AAVE"),
     [transactions]
@@ -83,9 +97,23 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     [transactions]
   );
 
+  const userAAVEMovements = useMemo(
+    () => movements?.filter((movement) => movement.protocol === "AAVE"),
+    [movements]
+  );
+
+  const userVaultMovements = useMemo(
+    () => movements?.filter((movement) => movement.protocol === "VAULT"),
+    [movements]
+  );
+
   // Error state
-  if (userError || transactionsError)
-    return <FullPageError errorMessage={userError?.message || transactionsError?.message} />;
+  if (userError || transactionsError || movementsError)
+    return (
+      <FullPageError
+        errorMessage={userError?.message || transactionsError?.message || movementsError?.message}
+      />
+    );
 
   // Loading state
   if (!isPrivyReady) return <FullPageLoader />;
@@ -94,6 +122,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     <UserProviderContext.Provider
       value={{
         dbUser,
+        userMovements: {
+          aave: userAAVEMovements,
+          vault: userVaultMovements,
+          all: movements,
+        },
         userTransactions: {
           aave: userAAVETransactions,
           vault: userVaultTransactions,
@@ -101,6 +134,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         },
         refetchUser,
         refetchTransactions,
+        refetchMovements,
       }}
     >
       {children}

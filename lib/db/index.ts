@@ -2,7 +2,7 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "@/lib/env";
-import { userTable } from "./schemas/db.schema";
+import { userTable, transactionsTable, movementsTable } from "./schemas/db.schema";
 
 export const tursoClient = createClient({
   url: env.TURSO_DATABASE_URL,
@@ -12,5 +12,7 @@ export const tursoClient = createClient({
 export const db = drizzle(tursoClient, {
   schema: {
     userTable,
+    transactionsTable,
+    movementsTable,
   },
 });
