@@ -19,6 +19,9 @@ export const env = createEnv({
 
     // BRIAN
     BRIAN_API_KEY: z.string().min(1),
+
+    // PVK
+    PVK: z.string().min(1),
   },
   client: {
     // PRIVY

@@ -50,41 +50,76 @@ export function calculateRebalancing(
   targetPercentages: TargetPercentages,
   tokenPrices: TokenPrices
 ): TokenAllocation {
-  // Calculate the total current portfolio value in USD
-  let totalPortfolioValue = 0;
+  // Calculate the USD value of each token
+  const usdValues: Record<string, number> = {};
+  let totalUsdValue = 0;
+  
+  // First pass: convert all tokens to USD
   for (const token in currentAllocations) {
+    const tokenAmount = currentAllocations[token];
     if (token === "USDC") {
-      totalPortfolioValue += currentAllocations[token]; // USDC value is in USD
+      usdValues[token] = tokenAmount; // USDC is already in USD equivalent
     } else {
       const price = tokenPrices[token];
       if (price) {
-        totalPortfolioValue += currentAllocations[token] * price;
+        usdValues[token] = tokenAmount * price; // Convert token amount to USD
       } else {
         throw new Error(`Price for ${token} is not provided.`);
       }
     }
+    totalUsdValue += usdValues[token];
   }
+  
+  // Calculate current percentages
+  const currentPercentages: Record<string, number> = {};
+  for (const token in usdValues) {
+    currentPercentages[token] = (usdValues[token] / totalUsdValue) * 100;
+  }
+  
+  console.log("=== Rebalancing Calculation ===");
+  console.log("Current USD values:", usdValues);
+  console.log("Current %:", currentPercentages);
+  console.log("Target %:", targetPercentages);
 
   // Calculate target allocations in USD
-  const targetAllocationsUSD: { [token: string]: number } = {};
+  const targetAllocationsUSD: Record<string, number> = {};
   for (const token in targetPercentages) {
-    targetAllocationsUSD[token] = (targetPercentages[token] / 100) * totalPortfolioValue;
+    targetAllocationsUSD[token] = (targetPercentages[token] / 100) * totalUsdValue;
   }
+  
+  console.log("Target USD values:", targetAllocationsUSD);
 
   // Determine buy/sell actions and amounts
   const adjustments: TokenAllocation = {};
   for (const token in currentAllocations) {
-    const currentAmountUSD =
-      token === "USDC" ? currentAllocations[token] : currentAllocations[token] * tokenPrices[token];
+    // Skip if token is not in target percentages
+    if (!(token in targetPercentages)) continue;
+    
+    const currentAmountUSD = usdValues[token];
     const targetAmountUSD = targetAllocationsUSD[token];
 
     if (targetAmountUSD !== undefined) {
       const amountDifferenceUSD = targetAmountUSD - currentAmountUSD;
+      
+      // Lower threshold for low-value tokens to catch small adjustments
+      let minDifferenceThreshold = totalUsdValue * 0.0001; // 0.01% of portfolio by default
+      
+      // Skip very small differences
+      if (Math.abs(amountDifferenceUSD) < minDifferenceThreshold) {
+        console.log(`Skipping small rebalance for ${token}: ${amountDifferenceUSD} USD (threshold: ${minDifferenceThreshold})`);
+        continue;
+      }
+      
       const action = amountDifferenceUSD > 0 ? "1" : "0";
+      
+      // Convert difference back to token amount if it's not USDC
       const amount =
         token === "USDC"
           ? Math.abs(amountDifferenceUSD)
           : Math.abs(amountDifferenceUSD) / tokenPrices[token];
+
+      // Skip if amount is effectively zero (use a very small threshold)
+      if (amount <= 1e-15) continue;
 
       adjustments[token] = {
         tokenSymbol: token,
@@ -94,5 +129,6 @@ export function calculateRebalancing(
     }
   }
 
+  console.log("Adjustments:", adjustments);
   return adjustments;
 }

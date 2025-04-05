@@ -9,22 +9,91 @@ import {
   TokenAllocation,
   TokenPrices,
 } from "@/lib/token-metrics/types";
+import { createPublicClient, createWalletClient, http, parseEther} from "viem";
+import { arbitrumSepolia } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import { erc20Abi } from "@/lib/abi/erc20";
+import { USDC_ADDRESS, WETH_ADDRESS, VAULT_ADDRESS, WBTC_ADDRESS } from "@/lib/constants";
 
-const actualAllocationsAmounts: CurrentAllocations = {
-  ETH: 5.4,
-  BTC: 0.67,
-  UNI: 22.76,
-  USDC: 5000,
-};
-
-const tokenPrices: TokenPrices = {
-  ETH: 1770.69, // Current price of ETH in USD
-  BTC: 81982.0, // Current price of BTC in USD
-  UNI: 5.7, // Current price of UNI in USD
-  USDC: 1.0, // Current price of USDC in USD
-};
 
 export async function GET(request: NextRequest) {
+  const client = createPublicClient({
+    chain: arbitrumSepolia,
+    transport: http(),
+  });
+  
+  // Fetch token balances
+  const wethBalance = await client.readContract({
+    address: WETH_ADDRESS as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [VAULT_ADDRESS],
+  });
+  
+  const wbtcBalance = await client.readContract({
+    address: WBTC_ADDRESS as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [VAULT_ADDRESS],
+  });
+
+  const usdcBalance = await client.readContract({
+    address: USDC_ADDRESS as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [VAULT_ADDRESS],
+  });
+
+  // Fetch token prices from API
+  const wethPriceResponse = await fetch('https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2&vs_currencies=usd');
+  const wethPriceData = await wethPriceResponse.json();
+  const wethPrice = wethPriceData['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'].usd;
+
+  const wbtcPriceResponse = await fetch('https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&vs_currencies=usd');
+  const wbtcPriceData = await wbtcPriceResponse.json();
+  const wbtcPrice = wbtcPriceData['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'].usd;
+  
+  // Set up token prices from API data
+  const tokenPrices: TokenPrices = {
+    ETH: wethPrice,
+    BTC: wbtcPrice,
+    USDC: 1.0,
+  };
+
+  // Calculate total portfolio value in USD
+  const totalPortfolioValue = 
+    (Number(wethBalance) / 1e18 * wethPrice) + 
+    (Number(wbtcBalance) / 1e18 * wbtcPrice) + 
+    (Number(usdcBalance) / 1e6);
+
+  // Calculate actual token amounts (in their native units with correct decimals)
+  const currentAllocationsAmounts: CurrentAllocations = {
+    ETH: Number(wethBalance) / 1e18,
+    BTC: Number(wbtcBalance) / 1e18,
+    USDC: Number(usdcBalance) / 1e6,
+  };
+  
+  // Calculate USD values for each token
+  const usdValues = {
+    ETH: currentAllocationsAmounts.ETH * wethPrice,
+    BTC: currentAllocationsAmounts.BTC * wbtcPrice,
+    USDC: currentAllocationsAmounts.USDC
+  };
+  
+  const totalUsdValue = usdValues.ETH + usdValues.BTC + usdValues.USDC;
+  
+  // Calculate percentages for display with higher precision for small amounts
+  const currentAllocationPercentages = {
+    ETH: (usdValues.ETH / totalUsdValue) * 100,
+    BTC: (usdValues.BTC / totalUsdValue) * 100,
+    USDC: (usdValues.USDC / totalUsdValue) * 100
+  };
+
+  console.log("=== Current Portfolio ===");
+  console.log("Balances:", currentAllocationsAmounts);
+  console.log("USD Values:", usdValues);
+  console.log("Current %:", currentAllocationPercentages);
+
   const { searchParams } = new URL(request.url);
 
   // Get the token ids
@@ -46,6 +115,57 @@ export async function GET(request: NextRequest) {
   // Get the number of tokens to fetch
   const limit = tokenIds ? tokenIds.split(",").length : 3;
 
+  // Create a wallet client using the private key from environment variables
+  const account = privateKeyToAccount(env.PVK as `0x${string}`);
+  const walletClient = createWalletClient({
+    account,
+    chain: arbitrumSepolia,
+    transport: http(),
+  });
+
+  console.log("Using account:", account.address);
+  
+  // Example of a contract write transaction
+  async function executeRebalance(tokensToSwap: string[], zeroToOne: boolean[], amountIn: string[]) {
+    console.log("Executing rebalance...");
+    try {
+      // Assume you have a vault contract ABI with a rebalance function
+      const vaultAbi = [{
+        inputs: [
+          { internalType: "address[]", name: "tokens_to_swap", type: "address[]" },
+          { internalType: "bool[]", name: "zero_to_one", type: "bool[]" },
+          { internalType: "uint256[]", name: "amount_in", type: "uint256[]" }
+        ],
+        name: "rebalance",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function"
+      }];
+      
+      // Convert string amounts to BigInt
+      const amountInBigInt = amountIn.map(amount => BigInt(amount));
+      
+      // Execute the contract write transaction
+      const hash = await walletClient.writeContract({
+        address: VAULT_ADDRESS as `0x${string}`,
+        abi: vaultAbi,
+        functionName: "rebalance",
+        args: [
+          tokensToSwap as `0x${string}`[],
+          zeroToOne,
+          amountInBigInt
+        ],
+        gas: 8000000
+      });
+      
+      console.log("Transaction submitted:", hash);
+      return hash;
+    } catch (error) {
+      console.error("Error executing rebalance:", error);
+      throw error;
+    }
+  }
+
   try {
     const response = await ky
       .get<TMInvestorGradeResponse>(
@@ -62,22 +182,135 @@ export async function GET(request: NextRequest) {
       .json();
 
     const desiredAllocations: TargetPercentages = calculatePortfolioAllocations(response.data);
-    console.log(desiredAllocations);
+    console.log("=== Target Allocations ===");
+    console.log("Target %:", desiredAllocations);
 
     const rebalancing: TokenAllocation = calculateRebalancing(
-      actualAllocationsAmounts,
+      currentAllocationsAmounts,
       desiredAllocations,
       tokenPrices
     );
-    console.log(rebalancing);
+    
+    // Format data for rebalance function parameters
+    const tokensToSwap: string[] = [];
+    const zeroToOne: boolean[] = [];
+    const amountIn: string[] = [];
+    
+    // Filter out USDC as a token to swap and any zero-amount transactions
+    // We only want to swap ETH<>USDC and BTC<>USDC based on contract implementation
+    Object.entries(rebalancing).forEach(([tokenSymbol, adjustment]) => {
+      // Skip USDC entries - we don't swap USDC directly, it's the base pair
+      if (tokenSymbol === "USDC") {
+        return;
+      }
+      
+      // Use a much lower threshold since BTC now has 18 decimals
+      const minAmount = 1e-15; // Very small amount to filter out true zeros
+      if (adjustment.amount < minAmount) {
+        console.log(`Skipping near-zero amount for ${tokenSymbol}: ${adjustment.amount}`);
+        return;
+      }
+      
+      tokensToSwap.push(tokenSymbol === "ETH" ? WETH_ADDRESS : WBTC_ADDRESS);
+      
+      // In the smart contract:
+      // true = token -> USDC (selling token)
+      // false = USDC -> token (buying token)
+      const isZeroToOne = adjustment.action === "0"; // 0 = sell, 1 = buy
+      zeroToOne.push(isZeroToOne);
+      
+      let amountInWei;
+      
+      if (isZeroToOne) {
+        // SELLING token: amount is in token units
+        // Convert token amount to wei
+        amountInWei = BigInt(Math.floor(adjustment.amount * 10**18));
+      } else {
+        // BUYING token: amount should be in USDC
+        // Calculate the USD value needed
+        const usdValueNeeded = adjustment.amount * tokenPrices[tokenSymbol];
+        // Convert USD value to USDC with 6 decimals
+        amountInWei = BigInt(Math.floor(usdValueNeeded * 10**6));
+      }
+      
+      // Ensure no zero amounts
+      if (amountInWei === BigInt(0)) {
+        amountInWei = BigInt(1);
+      }
+      
+      amountIn.push(amountInWei.toString());
+    });
+    
+    // Calculate human-readable amounts for display
+    const humanReadableAmounts = [];
+    for (let i = 0; i < tokensToSwap.length; i++) {
+      let tokenSymbol = "Unknown";
+      if (tokensToSwap[i] === WETH_ADDRESS) tokenSymbol = "ETH";
+      else if (tokensToSwap[i] === WBTC_ADDRESS) tokenSymbol = "BTC";
+      
+      const action = zeroToOne[i] ? "Sell" : "Buy";
+      
+      let amount;
+      if (zeroToOne[i]) {
+        // For selling: amount is in token units (18 decimals)
+        amount = (Number(amountIn[i]) / 10**18).toFixed(18);
+      } else {
+        // For buying: amount is in USDC (6 decimals)
+        const usdcAmount = (Number(amountIn[i]) / 10**6).toFixed(6);
+        // Add the equivalent token amount for reference
+        const tokenAmount = Number(usdcAmount) / tokenPrices[tokenSymbol];
+        amount = `${usdcAmount} USDC (≈ ${tokenAmount.toFixed(18)} ${tokenSymbol})`;
+      }
+      
+      humanReadableAmounts.push({
+        token: tokenSymbol,
+        action,
+        amount
+      });
+    }
+    
+    // Make sure we log the full adjustment info for debugging
+    console.log("Raw Adjustments:", rebalancing);
+    
+    console.log("=== Rebalance Parameters ===");
+    console.log("tokens_to_swap:", tokensToSwap.map(addr => addr === WETH_ADDRESS ? "ETH" : addr === WBTC_ADDRESS ? "BTC" : addr));
+    console.log("zero_to_one:", zeroToOne);
+    console.log("amount_in (wei):", amountIn);
+    console.log("=== Human Readable Amounts ===");
+    console.log(humanReadableAmounts);
+    
+    // Check if we should execute rebalancing directly
+    // You could add a query parameter to control this
+    const shouldExecuteRebalance = request.url.includes("execute=true");
+    console.log("CAMADONNA",shouldExecuteRebalance)
+    let transactionHash = null;
 
-    // Calculate the total amount to rebalance by multiplying the amount by the price
-    const rebalanceAmount = Object.values(rebalancing).reduce((acc, curr) => {
-      return acc + curr.amount * tokenPrices[curr.tokenSymbol];
-    }, 0);
-    console.log("rebalanceAmount", rebalanceAmount);
+    console.log("Executing rebalance...");
+    try {
+      transactionHash = await executeRebalance(tokensToSwap, zeroToOne, amountIn);
+    } catch (error) {
+      console.error("Failed to execute rebalance:", error);
+    }
+    
 
-    return NextResponse.json(desiredAllocations, { status: 200 });
+    // Return both desired allocations and current token amounts
+    return NextResponse.json({
+      desiredAllocations,
+      currentAllocationAmounts: currentAllocationsAmounts,
+      currentAllocationPercentages,
+      rebalance: {
+        tokens_to_swap: tokensToSwap,
+        zero_to_one: zeroToOne,
+        amount_in: amountIn
+      },
+      humanReadable: humanReadableAmounts,
+      execution: shouldExecuteRebalance ? {
+        status: transactionHash ? "success" : "failed",
+        transactionHash
+      } : {
+        status: "not_executed"
+      }
+    }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch data from Token Metrics" }, { status: 500 });

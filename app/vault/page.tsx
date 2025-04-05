@@ -146,7 +146,7 @@ export default function VaultPage() {
   const handleRebalance = async () => {
     setIsRebalancing(true);
     try {
-      const tokenIds = "3375,3306,4425";
+      const tokenIds = "3375,3306";
       const response = await ky
         .get<TargetPercentages>(`/api/token-metrics/investor-grades?tokenIds=${tokenIds}`)
         .json();
