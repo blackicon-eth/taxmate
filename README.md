@@ -2,13 +2,13 @@
 
 ## Overview
 
-TAXMATE is a DeFi application that helps businesses optimize their treasury management by turning sleeping liquidity into yield. It provides a simple interface for depositing assets, tracking earnings, and managing treasury.
-Token Metrics APIs are leveraged to manage a higher risk portfolio, called "Vault".
+TAXMATE is a portfolio manager application that helps web2 users and businesses to optimize their funds by turning sleeping liquidity into yield. It provides a simple interface for depositing assets, tracking earnings, and managing treasury and downloading reports to file required taxation papers every year
+Token Metrics APIs are leveraged to manage a higher risk investment strategy, called the "Vault". This index contains many different assets and it's rebalanced every 24 hours following Token Metrics insights.
 
 ## Features
 
 - **Simple Mode**: Direct deposit into AAVE for simple yield generation
-- **Vault Mode**: Vault styled portfolio with asset rebalancing capabilities.
+- **Vault Mode**: Vault styled portfolio with asset rebalancing capabilities
 - **Yield Tracking**: Track deposits, earnings, and APY in real-time
 - **Visualization**: View your performance with charts
 - **CSV Export**: Download reports in csv format that will help you to file your fiscal papers
@@ -19,42 +19,7 @@ Token Metrics APIs are leveraged to manage a higher risk portfolio, called "Vaul
 - **Authentication**: Privy.io for web3 authentication
 - **Blockchain**: Arbitrum Sepolia with Stylus to optimize gas fees
 - **DeFi Protocols**: AAVE for yield generation
-- **Charts**: Tremor and Recharts for data visualization
-- **Database**: DrizzleORM with LibSQL
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- PNPM 10+
-
-### Installation
-
-1. Clone the repository
-
-   ```bash
-   git clone https://github.com/yourusername/taxmate.git
-   cd taxmate
-   ```
-
-2. Install dependencies
-
-   ```bash
-   pnpm install
-   ```
-
-3. Configure environment variables
-
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your configuration
-   ```
-
-4. Start the development server
-   ```bash
-   pnpm dev
-   ```
+- **Charts**: Tremor Charts for data visualization
 
 ## Usage
 
@@ -73,10 +38,14 @@ Token Metrics APIs are leveraged to manage a higher risk portfolio, called "Vaul
 - `/public`: Static assets
 - `/types`: TypeScript type definitions
 
-## License
-
-[MIT License](LICENSE)
-
 ## Created At
 
 ETHBucharest 2025
+
+## Contracts Repository
+
+https://github.com/SolidityDrone/taxmate-stylus-contracts/
+
+## License
+
+[MIT License](LICENSE)
