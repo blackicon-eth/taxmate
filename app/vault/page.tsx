@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
-import { mockVaultDonutChartData, USDC_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
+import { USDC_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
 import { LineChart } from "@/components/tremor-charts/line-chart";
 import { DonutChart } from "@/components/tremor-charts/donut-chart";
 import { BrianModal, BrianButton } from "@/components/providers/brian-button-provider";
@@ -19,20 +19,21 @@ import { useRegisteredUser } from "@/components/providers/user-provider";
 import { Skeleton } from "@/components/shadcn-ui/skeleton";
 import { CsvDownloadModal } from "@/components/custom-ui/csv-download-modal";
 import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
-import { env } from "@/lib/env";
 import { vaultAbi } from "@/lib/abi/vault";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { erc20Abi } from "@/lib/abi/erc20";
 import { Transaction } from "@/lib/db/schemas/db.schema";
+import { useVaultDistribution } from "@/components/providers/vault-distribution-provider";
 
 export default function VaultPage() {
   const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
+  const { vaultDistribution: initialVaultDistribution } = useVaultDistribution();
   const [lineChartData, setLineChartData] = useState<LineChartData[]>([]);
   const [minValue, setMinValue] = useState<number>(0);
   const [isRebalancing, setIsRebalancing] = useState(false);
   const [amount, setAmount] = useState("");
   const [vaultDistribution, setVaultDistribution] =
-    useState<VaultDistribution[]>(mockVaultDonutChartData);
+    useState<VaultDistribution[]>(initialVaultDistribution);
   const { authenticated } = usePrivy();
   const router = useRouter();
 
@@ -208,11 +209,13 @@ export default function VaultPage() {
     try {
       const tokenIds = "3375,3306";
       const response = await ky
-        .get<TargetPercentages>(`/api/token-metrics/investor-grades?tokenIds=${tokenIds}`)
+        .get<{ desiredAllocations: TargetPercentages }>(
+          `/api/token-metrics/investor-grades?tokenIds=${tokenIds}`
+        )
         .json();
       console.log(response);
       setVaultDistribution(
-        Object.entries(response).map(([token, amount]) => ({
+        Object.entries(response.desiredAllocations).map(([token, amount]) => ({
           name: token,
           amount: amount,
         }))
@@ -223,6 +226,14 @@ export default function VaultPage() {
       setIsRebalancing(false);
     }
   };
+
+  // Update local state when provider data changes
+  useEffect(() => {
+    if (initialVaultDistribution) {
+      console.log("Updating vault distribution from provider:", initialVaultDistribution);
+      setVaultDistribution(initialVaultDistribution);
+    }
+  }, [initialVaultDistribution]);
 
   return (
     <motion.div
@@ -313,16 +324,18 @@ export default function VaultPage() {
             {/* Charts */}
             <div className="flex justify-between items-center size-full">
               <div className="flex flex-col w-1/2 h-full justify-end items-center gap-4">
-                <DonutChart
-                  className="h-[60%] w-full"
-                  data={vaultDistribution}
-                  variant="pie"
-                  category="name"
-                  value="amount"
-                  valueFormatter={(number: number) =>
-                    `${Intl.NumberFormat("us").format(number).toString()}%`
-                  }
-                />
+                {vaultDistribution ? (
+                  <DonutChart
+                    className="h-[60%] w-full"
+                    data={vaultDistribution}
+                    variant="pie"
+                    category="name"
+                    value="amount"
+                    valueFormatter={(number: number) => `${number.toFixed(2)}%`}
+                  />
+                ) : (
+                  <Skeleton className="h-[60%] w-full" />
+                )}
                 <div className="flex flex-col justify-center items-center gap-1">
                   <p className="text-xl font-bold">Vault Distribution</p>
                   <AnimatedButton

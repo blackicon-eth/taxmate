@@ -11,6 +11,7 @@ import { arbitrumSepolia } from "viem/chains";
 
 import { http } from "wagmi";
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
+import { VaultDistributionProvider } from "@/components/providers/vault-distribution-provider";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +47,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           <NuqsAdapter>
             <NavigationProvider>
               <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-                <BrianButtonProvider>{children}</BrianButtonProvider>
+                <VaultDistributionProvider>
+                  <BrianButtonProvider>{children}</BrianButtonProvider>
+                </VaultDistributionProvider>
               </WagmiProvider>
             </NavigationProvider>
           </NuqsAdapter>
