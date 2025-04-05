@@ -20,3 +20,6 @@ export const USDC_ADDRESS = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d";
 export const WETH_ADDRESS = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73";
 export const ATOKEN_ADDRESS = "0xc0Bac16A64FbAa7EE6483bD12a759e28cD13dcBe";
 export const VAULT_ADDRESS = "0x74d50d6f85123f49e6b408b18bf84db387893d50";
+
+// Aave contract address to take the balance of the user
+export const AAVE_CONTRACT_ADDRESS = "0x460b97bd498e1157530aeb3086301d5225b91216";

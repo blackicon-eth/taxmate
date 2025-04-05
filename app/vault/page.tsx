@@ -25,22 +25,22 @@ import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { erc20Abi } from "@/lib/abi/erc20";
 
 export default function VaultPage() {
-  const { userTransactions } = useRegisteredUser();
+  const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
   const [lineChartData, setLineChartData] = useState<LineChartData[]>([]);
   const [minValue, setMinValue] = useState<number>(0);
-  const [startingAmount, setStartingAmount] = useState<number>(0);
-  const [endingAmount, setEndingAmount] = useState<number>(0);
-
-  const [ROI, setROI] = useState<number>(0);
   const [isRebalancing, setIsRebalancing] = useState(false);
   const [amount, setAmount] = useState("");
   const [vaultDistribution, setVaultDistribution] =
     useState<VaultDistribution[]>(mockVaultDonutChartData);
-  const totalDeposited = useCountUp(startingAmount, 1500);
-  const totalEarned = useCountUp(endingAmount - startingAmount, 1500);
-  const currentROI = useCountUp(ROI, 1500);
   const { authenticated } = usePrivy();
   const router = useRouter();
+
+  const [deposited, setDeposited] = useState<number>(0);
+  const [earned, setEarned] = useState<number>(0);
+
+  const totalDeposited = useCountUp(deposited, 1500);
+  const totalEarned = useCountUp(earned, 1500);
+  const currentAPY = useCountUp(2.44, 1500);
 
   useEffect(() => {
     if (!authenticated) {
@@ -50,24 +50,77 @@ export default function VaultPage() {
 
   useEffect(() => {
     if (userTransactions.vault) {
+      // Get the last snapshot
+      const lastSnapshot = userTransactions.vault?.[userTransactions.vault.length - 1];
+
+      // The deposited amount is the last snapshot minus some eventual movements happened today
+      const today = new Date();
+      today.setHours(today.getHours() - 3); // UTC+0
+      const todayMovements = userMovements.vault?.filter((movement) => {
+        const movementDate = new Date(movement.createdAt);
+        return movementDate.toDateString() === today.toDateString();
+      });
+      const todayMovementsSum =
+        todayMovements?.reduce((acc, movement) => {
+          if (movement.isBuy) {
+            return acc + movement.amount;
+          }
+          return acc - movement.amount;
+        }, 0) ?? 0;
+      const currentDeposited = lastSnapshot.amountUSD - todayMovementsSum;
+
       setLineChartData(
-        userTransactions.vault.map((transaction) => ({
-          date: transaction.createdAt,
-          earned: transaction.amountUSD,
-        }))
+        userTransactions.vault.map((transaction, index) => {
+          if (index === userTransactions.vault!.length - 1) {
+            return {
+              date: transaction.createdAt,
+              earned: currentDeposited,
+            };
+          }
+          return {
+            date: transaction.createdAt,
+            earned: transaction.amountUSD,
+          };
+        })
       );
-      setStartingAmount(userTransactions.vault?.[0]?.amountUSD ?? 0);
-      setEndingAmount(userTransactions.vault?.[userTransactions.vault.length - 1]?.amountUSD ?? 0);
+
+      setDeposited(currentDeposited);
+
+      const allMovementsSum =
+        userMovements.vault?.reduce((acc, movement) => {
+          if (movement.isBuy) {
+            return acc + movement.amount;
+          }
+          return acc - movement.amount;
+        }, 0) ?? 0;
+
+      const firstSnapshot = userTransactions.vault?.[0];
+
+      // The earned amount is the last snapshot minus the movements sum minus the first snapshot
+      setEarned(
+        lastSnapshot.amountUSD - firstSnapshot?.amountUSD - allMovementsSum + todayMovementsSum
+      );
 
       setMinValue(Math.min(...userTransactions.vault.map((transaction) => transaction.amountUSD)));
-      setROI(((endingAmount - startingAmount) / startingAmount) * 100);
     }
   }, [userTransactions]);
+
+  const createMovement = async (amount: number, isBuy: boolean) => {
+    try {
+      await ky.post("/api/movements/vault", {
+        body: JSON.stringify({ amount, isBuy }),
+      });
+      refetchMovements();
+    } catch (error) {
+      console.error("Error creating movement:", error);
+    }
+  };
 
   const {
     data: depositTxHash,
     isPending: isDepositPending,
     error: depositError,
+    isSuccess: isDepositSuccess,
     writeContract: writeDepositContract,
   } = useWriteContract();
 
@@ -178,7 +231,7 @@ export default function VaultPage() {
           <h1 className="text-3xl font-bold">Deposit, forget and start earning. Simple as that.</h1>
           {userTransactions.vault ? (
             <CsvDownloadModal transactions={userTransactions.vault}>
-              <CsvDownloadButton label="Download CSV" />
+              <CsvDownloadButton label="Vault Report" />
             </CsvDownloadModal>
           ) : (
             <Skeleton className="w-[146px] h-[36px]" />
@@ -241,8 +294,8 @@ export default function VaultPage() {
               </div>
 
               <div className="flex flex-col justify-center items-center gap-1">
-                <h1 className="text-lg font-bold">Current ROI %</h1>
-                <p className="text-3xl text-primary font-bold">{currentROI}%</p>
+                <h1 className="text-lg font-bold">Current APY %</h1>
+                <p className="text-3xl text-primary font-bold">{currentAPY}%</p>
               </div>
             </div>
 

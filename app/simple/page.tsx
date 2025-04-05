@@ -2,7 +2,7 @@
 
 import { AnimatedButton } from "@/components/custom-ui/animated-button";
 import { Input } from "@/components/shadcn-ui/input";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,35 +15,40 @@ import { Skeleton } from "@/components/shadcn-ui/skeleton";
 import { CsvDownloadModal } from "@/components/custom-ui/csv-download-modal";
 import { CsvDownloadButton } from "@/components/custom-ui/csv-download-button";
 import { aavePoolAbi } from "@/lib/abi/aave-pool";
-import { env } from "@/lib/env";
 import { erc20Abi } from "@/lib/abi/erc20";
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { AAVE_POOL_ADDRESS, ATOKEN_ADDRESS, USDC_ADDRESS } from "@/lib/constants";
+import { AAVE_POOL_ADDRESS, AAVE_CONTRACT_ADDRESS, USDC_ADDRESS } from "@/lib/constants";
+import ky from "ky";
 
 export default function SimplePage() {
-  const { userTransactions } = useRegisteredUser();
+  const { userTransactions, userMovements, refetchMovements } = useRegisteredUser();
   const [lineChartData, setLineChartData] = useState<LineChartData[]>([]);
   const [minValue, setMinValue] = useState<number>(0);
-  const [startingAmount, setStartingAmount] = useState<number>(0);
-  const [endingAmount, setEndingAmount] = useState<number>(0);
-  const totalDeposited = useCountUp(startingAmount, 1500);
-  const totalEarned = useCountUp(endingAmount - startingAmount, 1500);
   const [amount, setAmount] = useState("");
-  const currentAPY = useCountUp(2.44, 1500);
   const { user, authenticated } = usePrivy();
   const router = useRouter();
 
-  const { data: userDeposits } = useReadContract({
-    address: ATOKEN_ADDRESS as `0x${string}`,
+  const [deposited, setDeposited] = useState<number>(0);
+  const [earned, setEarned] = useState<number>(0);
+
+  const totalDeposited = useCountUp(deposited, 1500);
+  const totalEarned = useCountUp(earned, 1500);
+  const currentAPY = useCountUp(2.44, 1500);
+
+  const { data: userBalance, refetch: refetchUserBalance } = useReadContract({
+    address: AAVE_CONTRACT_ADDRESS as `0x${string}`,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [user?.wallet?.address as `0x${string}`],
   });
 
+  const currentAAVEBalance = useCountUp(userBalance ? Number(userBalance) / 1_000_000 : 0, 1500);
+
   const {
     data: depositTxHash,
     isPending: isDepositPending,
     error: depositError,
+    isSuccess: isDepositSuccess,
     writeContract: writeDepositContract,
   } = useWriteContract();
 
@@ -61,8 +66,9 @@ export default function SimplePage() {
     writeContract: writeWithdrawContract,
   } = useWriteContract();
 
-  const { isLoading: isApprovalConfirming, isSuccess: isApprovalConfirmed } =
-    useWaitForTransactionReceipt({ hash: approvalTxHash });
+  const { isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({ hash: approvalTxHash });
+  const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({ hash: withdrawTxHash });
+  const { isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({ hash: depositTxHash });
 
   useEffect(() => {
     if (!authenticated) {
@@ -72,18 +78,72 @@ export default function SimplePage() {
 
   useEffect(() => {
     if (userTransactions.aave) {
+      // Get the last snapshot
+      const lastSnapshot = userTransactions.aave?.[userTransactions.aave.length - 1];
+
+      // The deposited amount is the last snapshot minus some eventual movements happened today
+      const today = new Date();
+      today.setHours(today.getHours() - 3); // UTC+0
+      const todayMovements = userMovements.aave?.filter((movement) => {
+        const movementDate = new Date(movement.createdAt);
+        return movementDate.toDateString() === today.toDateString();
+      });
+      const todayMovementsSum =
+        todayMovements?.reduce((acc, movement) => {
+          if (movement.isBuy) {
+            return acc + movement.amount;
+          }
+          return acc - movement.amount;
+        }, 0) ?? 0;
+      const currentDeposited = lastSnapshot.amountUSD + todayMovementsSum;
+
       setLineChartData(
-        userTransactions.aave.map((transaction) => ({
-          date: transaction.createdAt,
-          earned: transaction.amountUSD,
-        }))
+        userTransactions.aave.map((transaction, index) => {
+          if (index === userTransactions.aave!.length - 1) {
+            return {
+              date: transaction.createdAt,
+              earned: currentDeposited,
+            };
+          }
+          return {
+            date: transaction.createdAt,
+            earned: transaction.amountUSD,
+          };
+        })
       );
-      setStartingAmount(userTransactions.aave?.[0]?.amountUSD ?? 0);
-      setEndingAmount(userTransactions.aave?.[userTransactions.aave.length - 1]?.amountUSD ?? 0);
+
+      setDeposited(currentDeposited);
+
+      const allMovementsSum =
+        userMovements.aave?.reduce((acc, movement) => {
+          if (movement.isBuy) {
+            return acc + movement.amount;
+          }
+          return acc - movement.amount;
+        }, 0) ?? 0;
+
+      const firstSnapshot = userTransactions.aave?.[0];
+
+      // The earned amount is the last snapshot minus the movements sum minus the first snapshot
+      setEarned(
+        lastSnapshot.amountUSD - firstSnapshot?.amountUSD - allMovementsSum + todayMovementsSum
+      );
 
       setMinValue(Math.min(...userTransactions.aave.map((transaction) => transaction.amountUSD)));
     }
-  }, [userTransactions]);
+  }, [userTransactions, userMovements]);
+
+  const createMovement = async (amount: number, isBuy: boolean) => {
+    try {
+      await ky.post("/api/movements/aave", {
+        body: JSON.stringify({ amount, isBuy }),
+      });
+      refetchMovements();
+    } catch (error) {
+      console.error("Error creating movement:", error);
+    }
+  };
+
   useEffect(() => {
     if (isApprovalConfirmed) {
       console.log("Depositing...");
@@ -177,6 +237,22 @@ export default function SimplePage() {
     }
   };
 
+  // A useEffect to handle the withdraw success
+  useEffect(() => {
+    if (isWithdrawConfirmed) {
+      createMovement(parseFloat(amount), false);
+      refetchUserBalance();
+    }
+  }, [isWithdrawConfirmed]);
+
+  // A useEffect to handle the deposit success
+  useEffect(() => {
+    if (isDepositConfirmed) {
+      createMovement(parseFloat(amount), true);
+      refetchUserBalance();
+    }
+  }, [isDepositConfirmed]);
+
   return (
     <motion.div
       key="simple"
@@ -191,7 +267,7 @@ export default function SimplePage() {
           <h1 className="text-3xl font-bold">Deposit, forget and start earning. Simple as that.</h1>
           {userTransactions.aave ? (
             <CsvDownloadModal transactions={userTransactions.aave}>
-              <CsvDownloadButton label="Download CSV" />
+              <CsvDownloadButton label="Simple Earn Report" />
             </CsvDownloadModal>
           ) : (
             <Skeleton className="w-[146px] h-[36px]" />
@@ -199,7 +275,7 @@ export default function SimplePage() {
         </div>
         <div className="flex justify-between items-start gap-5 p-4 h-full">
           {/* AAVE Card */}
-          <div className="flex flex-col justify-between gap-2 bg-card p-5 rounded-lg w-1/4 h-[80%]">
+          <div className="flex flex-col justify-between gap-2 bg-card p-6 rounded-lg w-1/4 h-[80%]">
             <div className="flex flex-col gap-4">
               <div className="flex justify-start items-center gap-3.5">
                 <img src="/images/aave-logo.webp" alt="aave-logo" className="size-14" />
@@ -214,10 +290,25 @@ export default function SimplePage() {
                 Deposit your cash on AAVE and start earning simply. Withdraw whenever you want
               </p>
             </div>
+            {userBalance && userBalance > 0 ? (
+              <div className="flex flex-col gap-2 w-full text-center">
+                <p className="text-3xl text-secondary font-semibold">Deposited Amount</p>
+                <p className="text-4xl text-primary font-bold">${currentAAVEBalance.toFixed(2)}</p>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center gap-2 px-0.5">
                 <Input placeholder="Amount" value={amount} onChange={handleAmountChange} />
-                <button className="hover:underline cursor-pointer">Max</button>
+                <button
+                  className="hover:underline cursor-pointer"
+                  onClick={() =>
+                    setAmount(
+                      userBalance ? (Number(userBalance) / 1_000_000).toFixed(2).toString() : ""
+                    )
+                  }
+                >
+                  Max
+                </button>
               </div>
               <div className="flex gap-2">
                 <AnimatedButton onClick={handleDeposit} className="w-full h-[38px] text-sm">

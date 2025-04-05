@@ -12,17 +12,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shadcn-ui/dropdown-menu";
 import { AnimatedButton } from "./animated-button";
-import { usePrivy } from "@privy-io/react-auth";
+import { useFundWallet, usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
-import { Copy, Loader2, Check } from "lucide-react";
+import { Copy, Loader2, Check, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 export const Header = () => {
-  const { logout } = usePrivy();
+  const { logout, user } = usePrivy();
   const { dbUser } = useRegisteredUser();
   const pathname = usePathname();
   const [isCopying, setIsCopying] = useState(false);
   const [showCheck, setShowCheck] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { fundWallet } = useFundWallet();
 
   const handleCopy = (address: string) => {
     setIsCopying(true);
@@ -33,6 +35,20 @@ export const Header = () => {
       toast.success("Copied to clipboard");
       setTimeout(() => setShowCheck(false), 1500);
     }, 500);
+  };
+
+  const handleFundWallet = () => {
+    if (user?.wallet?.address) {
+      fundWallet(user.wallet.address);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    logout();
+    setTimeout(() => {
+      setIsLoggingOut(false);
+    }, 3000);
   };
 
   return (
@@ -76,6 +92,20 @@ export const Header = () => {
                 Advanced Vault
               </motion.h1>
             </Link>
+            {/* Fund Wallet Button with Glowing Effect */}
+            <motion.div
+              className="relative group ml-5 cursor-pointer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.3 }}
+              onClick={handleFundWallet}
+            >
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-lg blur opacity-60 group-hover:opacity-90 transition duration-500 cursor-pointer"></div>
+              <button className="relative flex items-center gap-2 px-2 py-0 bg-transparent rounded-lg text-secondary/80 font-bold cursor-pointer text-xl">
+                <Wallet size={20} />
+                Fund Wallet
+              </button>
+            </motion.div>
           </div>
         </div>
         <div className="flex justify-end items-center gap-4">
@@ -117,7 +147,9 @@ export const Header = () => {
               <div className="flex justify-center items-center mt-2 mb-3">
                 <AnimatedButton
                   className="bg-destructive h-[30px] w-[100px] text-sm"
-                  onClick={logout}
+                  onClick={handleLogout}
+                  isLoading={isLoggingOut}
+                  loaderSize={18}
                 >
                   LOGOUT
                 </AnimatedButton>

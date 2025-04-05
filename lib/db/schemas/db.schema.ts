@@ -47,3 +47,25 @@ export const transactionsTable = sqliteTable("transactions", {
 });
 
 export type Transaction = typeof transactionsTable.$inferSelect;
+
+/**
+ * Movements table
+ * This table is used to store all movements for a user
+ */
+export const movementsTable = sqliteTable("movements", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  walletAddress: text("wallet_address").notNull(),
+  isBuy: integer("is_buy").notNull(), // 1 for buy, 0 for sell
+  amount: integer("amount").notNull(),
+  protocol: text("protocol"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export type Movement = typeof movementsTable.$inferSelect;
