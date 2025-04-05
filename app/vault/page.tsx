@@ -44,7 +44,7 @@ export default function VaultPage() {
   const totalEarned = useCountUp(earned, 1500);
   const currentAPY = useCountUp(12.44, 1500);
 
-  const currentVAULTBalance = useCountUp(0, 1500);
+  const currentVAULTBalance = useCountUp(10638.27, 1500);
 
   useEffect(() => {
     if (!authenticated) {

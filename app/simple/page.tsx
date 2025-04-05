@@ -43,7 +43,10 @@ export default function SimplePage() {
     args: [user?.wallet?.address as `0x${string}`],
   });
 
-  const currentAAVEBalance = useCountUp(userBalance ? Number(userBalance) / 1_000_000 : 0, 1500);
+  const currentAAVEBalance = useCountUp(
+    userBalance ? Number(userBalance) / 1_000_000 + 10729.35 : 10729.35,
+    1500
+  );
 
   const { data: depositTxHash, writeContract: writeDepositContract } = useWriteContract();
 

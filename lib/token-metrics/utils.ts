@@ -1,3 +1,4 @@
+import ky from "ky";
 import {
   CurrentAllocations,
   TargetPercentages,
@@ -138,20 +139,30 @@ export function calculateRebalancing(
 // Get the price of WETH and WBTC from CoinGecko
 export const getWETHPrice = async () => {
   // Fetch token prices from API
-  const wethPriceResponse = await fetch(
-    "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2&vs_currencies=usd"
-  );
-  const wethPriceData = await wethPriceResponse.json();
-  const wethPrice = wethPriceData["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"].usd;
-  return wethPrice;
+  try {
+    const wethPriceData = await ky
+      .get<Record<string, Record<string, number>>>(
+        "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2&vs_currencies=usd"
+      )
+      .json();
+    const wethPrice = wethPriceData["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"].usd;
+    return wethPrice;
+  } catch (error) {
+    return 0;
+  }
 };
 
 // Get the price of WBTC from CoinGecko
 export const getWBTCPrice = async () => {
-  const wbtcPriceResponse = await fetch(
-    "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&vs_currencies=usd"
-  );
-  const wbtcPriceData = await wbtcPriceResponse.json();
-  const wbtcPrice = wbtcPriceData["0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"].usd;
-  return wbtcPrice;
+  try {
+    const wbtcPriceData = await ky
+      .get<Record<string, Record<string, number>>>(
+        "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&vs_currencies=usd"
+      )
+      .json();
+    const wbtcPrice = wbtcPriceData["0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"].usd;
+    return wbtcPrice;
+  } catch (error) {
+    return 0;
+  }
 };
